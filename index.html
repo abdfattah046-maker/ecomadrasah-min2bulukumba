@@ -171,7 +171,7 @@
                         <div>
                             <label class="block font-bold text-slate-700 mb-1">Ubah Foto Profil (Opsional)</label>
                             <input type="file" id="profilePhotoInput" accept="image/*" class="w-full bg-slate-50 border rounded-xl px-3 py-2 cursor-pointer">
-                            <p class="text-[10px] text-slate-400 mt-1">*Gambar akan otomatis diunggah ke folder Google Drive EcoSchool.</p>
+                            <p class="text-[10px] text-slate-400 mt-1">*Gambar akan otomatis diunggah ke folder Google Drive EcoMadrasah.</p>
                         </div>
                         <div>
                             <label class="block font-bold text-slate-700 mb-1">Ubah Username Anda</label>
@@ -629,8 +629,6 @@
             let role = document.getElementById('loginRole').value;
             let err = document.getElementById('loginError');
 
-            if(!ECOSCHOOL_API_URL) { err.textContent = "Masukkan URL Web App Apps Script di menu pengaturan!"; err.classList.remove('hidden'); return; }
-
             try {
                 if(role === 'admin' || role === 'principal') {
                     currentUser = { 
@@ -640,6 +638,11 @@
                         photo: "https://ui-avatars.com/api/?name=" + encodeURIComponent(nameInput) + "&background=059669&color=fff" 
                     };
                 } else {
+                    if(!ECOSCHOOL_API_URL) { 
+                        err.textContent = "API belum diatur! Hubungi Administrator Madrasah untuk menghubungkan sistem."; 
+                        err.classList.remove('hidden'); 
+                        return; 
+                    }
                     let accounts = await apiGet('listAccounts');
                     let found = accounts.find(a => a.username.toString().toLowerCase() === nameInput.toLowerCase() && a.role === role);
                     
@@ -1156,7 +1159,7 @@
                 document.getElementById('createMissionModal').classList.add('hidden');
                 document.getElementById('mTitle').value = '';
                 document.getElementById('mDesc').value = '';
-                alert("Misi EcoSchool berhasil diterbitkan ke server!");
+                alert("Misi EcoMadrasah berhasil diterbitkan ke server!");
                 loadMissions();
                 loadDashboardStats();
             } catch(e) {

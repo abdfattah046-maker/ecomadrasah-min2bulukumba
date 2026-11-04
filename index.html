@@ -531,7 +531,7 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        let ECOSCHOOL_API_URL = "https://script.google.com/macros/s/AKfycbxbyePJ8MGvqEPXI8NOu6PgSPfiRUxkS2O5hXOkJkbrTRVN2eZ1f6Ekat5iy2sfYEHn/exec";
+        let ECOSCHOOL_API_URL = localStorage.getItem('eco_api_url') || "";
         let currentUser = null;
 
         window.onload = function() {
@@ -971,11 +971,29 @@
             } catch(e) { console.warn("EcoImpact error:", e); }
         }
 
+        
+        async function getAllowedNames() {
+            if (currentUser.role === 'principal' || currentUser.role === 'admin' || (currentUser.role === 'teacher' && currentUser.isMapel)) {
+                return null; // Bebas lihat semua
+            }
+            let allowed = [currentUser.name.toLowerCase().trim()]; // Selalu izinkan data yang dibuat guru itu sendiri
+            if (currentUser.role === 'teacher') {
+                let students = await apiGet('getStudents');
+                let myStudents = students.filter(s => normalizeClass(s.kelas || s['kelas']) === currentUser.kelasBinaan);
+                myStudents.forEach(s => allowed.push((s['data siswa'] || s.nama).toLowerCase().trim()));
+            }
+            return allowed;
+        }
+
         async function loadWasteRecords() {
             let tbody = document.getElementById('wasteTableBody');
             if(!tbody) return;
             try {
                 let records = await apiGet('listWaste');
+                let allowedNames = await getAllowedNames();
+                if (allowedNames) {
+                    records = records.filter(w => w.kategori && allowedNames.includes(w.kategori.toLowerCase().trim()));
+                }
                 if(!records || records.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data EcoWaste.</td></tr>`;
                     return;
@@ -984,7 +1002,8 @@
                 tbody.innerHTML = records.map(w => {
                     let org = Number(w.organik || 0), rec = Number(w.daur_ulang || 0), res = Number(w.residu || 0);
                     tOrg += org; tRec += rec; tRes += res;
-                    return `<tr><td class="p-3">${w.tanggal || '-'}</td><td class="p-3 font-bold">${w.lokasi || '-'}</td><td class="p-3">${org} kg</td><td class="p-3 text-blue-600 font-bold">${rec} kg</td><td class="p-3 text-rose-600">${res} kg</td></tr>`;
+                    let reporter = (w.kategori && w.kategori !== 'Umum') ? `<br><span class="text-[9px] text-slate-400 font-normal">Oleh: ${w.kategori}</span>` : '';
+                    return `<tr><td class="p-3">${w.tanggal || '-'}</td><td class="p-3 font-bold">${w.lokasi || '-'}${reporter}</td><td class="p-3">${org} kg</td><td class="p-3 text-blue-600 font-bold">${rec} kg</td><td class="p-3 text-rose-600">${res} kg</td></tr>`;
                 }).join('');
                 document.getElementById('statTotalOrganic').textContent = tOrg.toFixed(1) + " kg";
                 document.getElementById('statTotalRecycled').textContent = tRec.toFixed(1) + " kg";
@@ -1019,6 +1038,10 @@
             if(!tbody) return;
             try {
                 let records = await apiGet('listEnergy');
+                let allowedNames = await getAllowedNames();
+                if (allowedNames) {
+                    records = records.filter(e => e.pelapor && allowedNames.includes(e.pelapor.toLowerCase().trim()));
+                }
                 if(!records || records.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Belum ada data EcoEnergy.</td></tr>`;
                     return;
@@ -1051,11 +1074,15 @@
             if(!tbody) return;
             try {
                 let records = await apiGet('listGreen');
+                let allowedNames = await getAllowedNames();
+                if (allowedNames) {
+                    records = records.filter(g => g.pelapor && allowedNames.includes(g.pelapor.toLowerCase().trim()));
+                }
                 if(!records || records.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-slate-400">Belum ada kegiatan penghijauan.</td></tr>`;
                     return;
                 }
-                tbody.innerHTML = records.map(g => `<tr><td class="p-3">${g.tanggal || '-'}</td><td class="p-3 font-bold">${g.nama_tanaman || '-'}</td><td class="p-3">${g.deskripsi || '-'}</td></tr>`).join('');
+                tbody.innerHTML = records.map(g => `<tr><td class="p-3">${g.tanggal || '-'}</td><td class="p-3 font-bold">${g.nama_tanaman || '-'}</td><td class="p-3">${g.deskripsi || '-'} <br><span class="text-[9px] text-slate-400">Oleh: ${g.pelapor || '-'}</span></td></tr>`).join('');
             } catch(e) { tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-rose-500">Gagal memuat</td></tr>`; }
         }
         async function loadPlantRecords() {

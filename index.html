@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EcoMadrasah AI - MIN 2 Bulukumba</title>
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#064e3b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/9/91/Logo_Kementerian_Agama_R.I._(2012).png">
+    <link id="manifest-link" rel="manifest" href="">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- FontAwesome Icons -->
@@ -17,14 +24,14 @@
 
     <!-- ================= LOGIN OVERLAY ================= -->
     <div id="authOverlay" class="fixed inset-0 bg-emerald-950 z-50 flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-emerald-100 my-auto">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-emerald-100 my-auto relative">
+            
             <div class="bg-emerald-900 p-6 text-white text-center relative">
                 <div class="w-16 h-16 bg-white rounded-2xl mx-auto flex items-center justify-center p-1 shadow-lg mb-2 overflow-hidden">
                     <div class="w-full h-full flex items-center justify-center bg-white">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Logo_Kementerian_Agama_RI.svg/512px-Logo_Kementerian_Agama_RI.svg.png" 
                              class="w-full h-full object-contain" 
-                             alt="Logo Kemenag" 
-                             onerror="this.onerror=null; this.outerHTML='<i class=\'fa-solid fa-school text-4xl text-emerald-700\'></i>';">
+                             alt="Logo Kemenag">
                     </div>
                 </div>
                 <h1 class="text-xl font-extrabold tracking-tight">EcoMadrasah AI</h1>
@@ -112,7 +119,11 @@
             <a href="#" onclick="switchTab('pengaturan')" id="nav-pengaturan" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-200 hover:bg-emerald-800/60 transition"><i class="fa-solid fa-gear w-5 text-center"></i><span>11. Pengaturan</span></a>
         </nav>
 
-        <div class="p-4 border-t border-emerald-800 bg-emerald-950/30">
+        <div class="p-4 border-t border-emerald-800 bg-emerald-950/30 space-y-2">
+            <!-- PWA Install Button -->
+            <button id="installAppBtn" onclick="installPWA()" class="hidden w-full bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs py-2 px-3 rounded-lg font-bold transition flex items-center justify-center space-x-2 cursor-pointer shadow-lg mb-2">
+                <i class="fa-solid fa-download"></i><span>Instal ke Perangkat</span>
+            </button>
             <button onclick="handleLogout()" class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs py-2 px-3 rounded-lg font-medium transition flex items-center justify-center space-x-2 cursor-pointer">
                 <i class="fa-solid fa-right-from-bracket"></i><span>Keluar (Logout)</span>
             </button>
@@ -279,7 +290,7 @@
                 <div id="studentSubmitCard" class="hidden bg-white p-6 rounded-2xl border-2 border-emerald-500 shadow-lg space-y-4 text-xs max-h-[85vh] overflow-y-auto">
                     <div class="flex justify-between items-center border-b pb-2">
                         <h4 class="font-bold text-emerald-900 text-sm" id="submitMissionTitle">Kirim Tugas</h4>
-                        <button onclick="document.getElementById('studentSubmitCard').classList.add('hidden')" class="text-slate-400 font-bold text-base">&times;</button>
+                        <button onclick="document.getElementById('studentSubmitCard').classList.add('hidden')" class="text-slate-400 font-bold text-base cursor-pointer">&times;</button>
                     </div>
                     <p id="submitMissionInstructions" class="text-slate-700 bg-emerald-50 p-3 rounded-xl">-</p>
                     <input type="hidden" id="activeMissionId">
@@ -292,7 +303,7 @@
                         <textarea id="subTextAnswer" rows="4" placeholder="Tuliskan laporan kegiatan Anda..." class="w-full bg-slate-50 border rounded-xl p-3 focus:outline-none"></textarea>
                     </div>
                     <div class="flex justify-end space-x-2 pt-2">
-                        <button onclick="document.getElementById('studentSubmitCard').classList.add('hidden')" class="px-4 py-2 border rounded-xl">Batal</button>
+                        <button onclick="document.getElementById('studentSubmitCard').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
                         <button onclick="submitStudentTask()" id="btnSubmitTask" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold cursor-pointer">Kirim ke Server</button>
                     </div>
                 </div>
@@ -308,18 +319,15 @@
                 <div class="flex justify-between items-center">
                     <div>
                         <h3 class="text-2xl font-extrabold text-slate-900">EcoAI Learning Assistant</h3>
-                        <p class="text-sm text-slate-500">Materi pembelajaran & asisten cerdas lingkungan madrasah.</p>
+                        <p class="text-sm text-slate-500">Materi pembelajaran berbasis AI & lingkungan madrasah.</p>
                     </div>
                     <div id="teacherMaterialBtnContainer"></div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Asisten Chat EcoAI -->
                     <div class="lg:col-span-2 bg-white rounded-2xl border shadow-xs flex flex-col h-[75vh] md:h-[500px] overflow-hidden">
                         <div class="p-4 border-b bg-emerald-50 flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center text-lg shadow">
-                                <i class="fa-solid fa-robot"></i>
-                            </div>
+                            <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center text-lg shadow"><i class="fa-solid fa-robot"></i></div>
                             <div>
                                 <h4 class="font-bold text-emerald-900">Tanya EcoAI</h4>
                                 <p class="text-[10px] text-emerald-700">Asisten Pintar Lingkungan MIN 2 Bulukumba</p>
@@ -329,19 +337,17 @@
                             <div class="flex items-start space-x-3">
                                 <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex shrink-0 items-center justify-center text-xs"><i class="fa-solid fa-robot"></i></div>
                                 <div class="bg-white p-3 rounded-2xl rounded-tl-none border shadow-sm text-slate-700 max-w-[85%]">
-                                    Halo! Saya EcoAI, asisten virtual Anda. Ada yang ingin ditanyakan tentang pelestarian lingkungan, daur ulang, atau energi?
+                                    Halo! Saya EcoAI. Karena sistem server saat ini sedang difokuskan pada stabilitas pelaporan, mode obrolan AI dinonaktifkan sementara waktu.
                                 </div>
                             </div>
                         </div>
                         <div class="p-4 border-t bg-white">
-                            <form onsubmit="handleAskEcoAI(event)" class="flex space-x-2">
-                                <input type="text" id="ecoAiInput" required placeholder="Ketik pertanyaanmu di sini..." class="flex-1 bg-slate-50 border rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 text-sm">
-                                <button type="submit" id="btnAskAi" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition shadow cursor-pointer"><i class="fa-solid fa-paper-plane"></i></button>
+                            <form onsubmit="event.preventDefault(); alert('Sistem chat AI dinonaktifkan untuk stabilisasi.');" class="flex space-x-2 opacity-50">
+                                <input type="text" disabled placeholder="Ketik pertanyaanmu di sini..." class="flex-1 bg-slate-50 border rounded-xl px-4 py-2.5 text-sm cursor-not-allowed">
+                                <button type="submit" disabled class="bg-slate-400 text-white px-5 py-2.5 rounded-xl font-bold cursor-not-allowed"><i class="fa-solid fa-paper-plane"></i></button>
                             </form>
                         </div>
                     </div>
-
-                    <!-- Daftar Materi -->
                     <div class="bg-white rounded-2xl border shadow-xs h-[75vh] md:h-[500px] flex flex-col">
                         <div class="p-4 border-b bg-slate-50 font-bold text-emerald-900 text-sm flex justify-between items-center">
                             <span><i class="fa-solid fa-book-open mr-2"></i>Materi dari Guru</span>
@@ -424,7 +430,7 @@
                 <div><label class="block font-bold mb-1">Kelas Sasaran</label><input type="text" id="mTargetClass" value="VI" class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
             </div>
             <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="document.getElementById('createMissionModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl">Batal</button>
+                <button onclick="document.getElementById('createMissionModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
                 <button onclick="submitNewMissionToServer()" id="btnCreateMission" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Terbitkan</button>
             </div>
         </div>
@@ -439,7 +445,7 @@
             <div><label class="block font-bold mb-1">Kelas Sasaran</label><input type="text" id="matClass" value="VI" class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
             <div><label class="block font-bold mb-1">Isi / Penjelasan Materi *</label><textarea id="matDesc" rows="4" class="w-full bg-slate-50 border rounded-xl p-3" placeholder="Penjelasan materi..."></textarea></div>
             <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="document.getElementById('createMaterialModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl">Batal</button>
+                <button onclick="document.getElementById('createMaterialModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
                 <button onclick="submitNewMaterialToServer()" id="btnCreateMaterial" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Simpan Materi</button>
             </div>
         </div>
@@ -458,7 +464,7 @@
                 </div>
                 <div><label class="block font-bold mb-1">Residu (kg)</label><input type="number" step="0.1" id="wResidue" value="0" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
                 <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="document.getElementById('wasteModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl">Batal</button>
+                    <button type="button" onclick="document.getElementById('wasteModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
                     <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Simpan</button>
                 </div>
             </form>
@@ -481,7 +487,7 @@
                 </div>
                 <div><label class="block font-bold mb-1">Deskripsi Kegiatan</label><textarea id="eDesc" rows="3" required class="w-full bg-slate-50 border rounded-xl p-3" placeholder="Rincian kegiatan..."></textarea></div>
                 <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="document.getElementById('energyModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl">Batal</button>
+                    <button type="button" onclick="document.getElementById('energyModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
                     <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Simpan</button>
                 </div>
             </form>
@@ -505,7 +511,7 @@
                 <div><label class="block font-bold mb-1">Nama Tanaman</label><input type="text" id="gPlantName" placeholder="Contoh: Lidah Buaya / Pohon Mangga" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
                 <div><label class="block font-bold mb-1">Deskripsi Perawatan</label><textarea id="gDesc" rows="3" required class="w-full bg-slate-50 border rounded-xl p-3"></textarea></div>
                 <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="document.getElementById('greenModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl">Batal</button>
+                    <button type="button" onclick="document.getElementById('greenModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
                     <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Simpan</button>
                 </div>
             </form>
@@ -522,15 +528,63 @@
                 <div><label class="block font-bold mb-1">Lokasi</label><input type="text" id="pLocation" placeholder="Taman Depan Kelas VI" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
                 <div><label class="block font-bold mb-1">Kondisi</label><input type="text" id="pCondition" value="Sehat & Subur" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
                 <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="document.getElementById('plantModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl">Batal</button>
+                    <button type="button" onclick="document.getElementById('plantModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
                     <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Simpan Tanaman</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- JAVASCRIPT LOGIC (Termasuk PWA Logic) -->
     <script>
+        // PWA MANIFEST INJECTION & SERVICE WORKER REGISTRATION
+        const manifestJSON = {
+            "name": "EcoMadrasah AI",
+            "short_name": "EcoMadrasah",
+            "start_url": "./index.html",
+            "display": "standalone",
+            "background_color": "#064e3b",
+            "theme_color": "#064e3b",
+            "icons": [{
+                "src": "https://upload.wikimedia.org/wikipedia/commons/9/91/Logo_Kementerian_Agama_R.I._(2012).png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
+        document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Tampilkan tombol instal di sidebar
+            document.getElementById('installAppBtn').classList.remove('hidden');
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepts PWA install');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('installAppBtn').classList.add('hidden');
+                });
+            }
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker Registered'))
+                .catch(err => console.log('Service Worker failed:', err));
+            });
+        }
+
+        // ORIGINAL APP LOGIC
         let ECOSCHOOL_API_URL = localStorage.getItem('eco_api_url') || "";
         let currentUser = null;
 
@@ -754,7 +808,6 @@
             switchTab('dashboard');
         }
 
-        // ================= FUNGSI UNGGAH PROFIL KE GOOGLE DRIVE =================
         async function handleUpdateProfile(e) {
             e.preventDefault();
             let btn = document.getElementById('btnUpdateProfile');
@@ -813,76 +866,6 @@
             } catch(e) {
                 alert("Error: " + e.message);
                 btn.disabled = false; btn.textContent = "Simpan Perubahan Profil";
-            }
-        }
-
-        // ================= MODUL LAINNYA =================
-        
-        async function handleAskEcoAI(e) {
-            e.preventDefault();
-            let inputEl = document.getElementById('ecoAiInput');
-            let chatBox = document.getElementById('ecoAiChatBox');
-            let btn = document.getElementById('btnAskAi');
-            let question = inputEl.value.trim();
-            if(!question) return;
-
-            chatBox.innerHTML += `
-                <div class="flex items-start justify-end space-x-3">
-                    <div class="bg-emerald-100 p-3 rounded-2xl rounded-tr-none border border-emerald-200 text-emerald-900 max-w-[85%] text-sm">
-                        ${question}
-                    </div>
-                    <div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden shrink-0">
-                        <img src="${currentUser?.photo}" class="w-full h-full object-cover">
-                    </div>
-                </div>
-            `;
-            inputEl.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
-            
-            let loadingId = "load-" + Date.now();
-            chatBox.innerHTML += `
-                <div id="${loadingId}" class="flex items-start space-x-3">
-                    <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex shrink-0 items-center justify-center text-xs"><i class="fa-solid fa-robot"></i></div>
-                    <div class="bg-white p-4 rounded-2xl rounded-tl-none border shadow-sm flex space-x-1 items-center h-10">
-                        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
-                        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                    </div>
-                </div>
-            `;
-            chatBox.scrollTop = chatBox.scrollHeight;
-            btn.disabled = true;
-
-            try {
-                let res = await apiPost({ action: "askAI", data: { question: question } });
-                document.getElementById(loadingId).remove();
-                
-                let answerText = (res && res.answer) ? res.answer : "Maaf, server belum menerima pembaruan AI. Mohon pastikan Anda sudah melakukan Deploy sebagai 'Versi Baru' di Google Apps Script.";
-                let answer = answerText.toString().replace(/\n/g, '<br>');
-                // Bold replacement for markdown **text**
-                answer = answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-                
-                chatBox.innerHTML += `
-                    <div class="flex items-start space-x-3">
-                        <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex shrink-0 items-center justify-center text-xs"><i class="fa-solid fa-robot"></i></div>
-                        <div class="bg-white p-3 rounded-2xl rounded-tl-none border shadow-sm text-slate-700 max-w-[85%] text-sm">
-                            ${answer}
-                        </div>
-                    </div>
-                `;
-            } catch(err) {
-                if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
-                chatBox.innerHTML += `
-                    <div class="flex items-start space-x-3">
-                        <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex shrink-0 items-center justify-center text-xs"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                        <div class="bg-rose-50 p-3 rounded-2xl rounded-tl-none border border-rose-200 text-rose-700 max-w-[85%] text-xs font-semibold">
-                            Koneksi ke AI gagal. (Pesan: ${err.message})
-                        </div>
-                    </div>
-                `;
-            } finally {
-                btn.disabled = false;
-                chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
         
@@ -971,12 +954,11 @@
             } catch(e) { console.warn("EcoImpact error:", e); }
         }
 
-        
         async function getAllowedNames() {
             if (currentUser.role === 'principal' || currentUser.role === 'admin' || (currentUser.role === 'teacher' && currentUser.isMapel)) {
-                return null; // Bebas lihat semua
+                return null; 
             }
-            let allowed = [currentUser.name.toLowerCase().trim()]; // Selalu izinkan data yang dibuat guru itu sendiri
+            let allowed = [currentUser.name.toLowerCase().trim()]; 
             if (currentUser.role === 'teacher') {
                 let students = await apiGet('getStudents');
                 let myStudents = students.filter(s => normalizeClass(s.kelas || s['kelas']) === currentUser.kelasBinaan);
@@ -1159,7 +1141,6 @@
             }
         }
 
-        
         async function submitNewMissionToServer() {
             let judul = document.getElementById('mTitle').value.trim();
             let deskripsi = document.getElementById('mDesc').value.trim();

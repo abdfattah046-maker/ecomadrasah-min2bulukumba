@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/9/91/Logo_Kementerian_Agama_R.I._(2012).png">
-    <link id="manifest-link" rel="manifest" href="">
+   <link rel="manifest" href="manifest.json">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -552,9 +552,7 @@
                 "purpose": "any maskable"
             }]
         };
-        const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
-        document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
-
+       
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();

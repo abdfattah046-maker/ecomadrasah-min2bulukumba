@@ -42,6 +42,8 @@
 
 <!-- Script Logika Filter Guru & Siswa -->
 <script>
+<!-- Script Logika Filter Guru & Siswa -->
+<script>
 // Panggil fungsi ini SETELAH proses login berhasil dan data siswa dari API sudah diambil
 // Contoh pemanggilan: renderTabelBinaanGuru(dataLoginGuru, dataSemuaSiswa);
 
@@ -52,59 +54,53 @@ function renderTabelBinaanGuru(currentUser, dataSiswaGlobal) {
         elemenNama.innerText = currentUser.nama_guru || currentUser.Nama || currentUser.nama || "Guru";
     }
 
-    // 2. Baca Kolom "Tugas" (Misal: "Guru Kelas 5", "Guru Mapel")
+    // 2. Baca Kolom "Tugas" (Contoh di Sheet: "Guru Kelas 5")
     let tugasGuru = currentUser.Tugas || currentUser.tugas || ""; 
     let tugasLower = tugasGuru.toLowerCase();
 
-    let namaKelasBinaan = "";
+    let angkaKelasBinaan = "";
+    let labelKelas = "";
     let daftarSiswaBinaan = [];
 
-    // 3. Logika Menentukan Kelas Binaan
-    if (tugasLower.includes("mapel") || tugasLower.includes("pjok") || tugasLower.includes("kepala")) {
-        // Guru Mapel / PJOK / Kepala Madrasah melihat SEMUA siswa
-        namaKelasBinaan = "Semua Kelas";
-        daftarSiswaBinaan = dataSiswaGlobal; 
-        
-    } else if (tugasLower.includes("kelas")) {
-        // Ekstrak angka dari teks "Guru Kelas 5" -> "5"
-        let angkaKelas = tugasGuru.replace(/[^0-9]/g, ''); 
-        
-        if(angkaKelas !== "") {
-            namaKelasBinaan = "Kelas " + angkaKelas;
-            // FILTER: Hanya ambil siswa yang angka kelasnya SAMA dengan angkaKelas guru
-            daftarSiswaBinaan = dataSiswaGlobal.filter(siswa => {
-                // Antisipasi perbedaan nama kolom di API (Kelas, kelas, atau Kelas_Siswa)
-                let kelasSiswa = siswa.Kelas || siswa.kelas || siswa.Kelas_Siswa || "";
-                return String(kelasSiswa) === String(angkaKelas);
-            });
-        } else {
-            namaKelasBinaan = "Tidak Ada Binaan";
-        }
+    // 3. Logika Menentukan Kelas Binaan (Membaca Teks Spesifik)
+    if (tugasLower.includes("kelas 1")) { angkaKelasBinaan = "1"; labelKelas = "Binaan Kelas I"; }
+    else if (tugasLower.includes("kelas 2")) { angkaKelasBinaan = "2"; labelKelas = "Binaan Kelas II"; }
+    else if (tugasLower.includes("kelas 3")) { angkaKelasBinaan = "3"; labelKelas = "Binaan Kelas III"; }
+    else if (tugasLower.includes("kelas 4")) { angkaKelasBinaan = "4"; labelKelas = "Binaan Kelas IV"; }
+    else if (tugasLower.includes("kelas 5")) { angkaKelasBinaan = "5"; labelKelas = "Binaan Kelas V"; }
+    else if (tugasLower.includes("kelas 6")) { angkaKelasBinaan = "6"; labelKelas = "Binaan Kelas VI"; }
+    else if (tugasLower.includes("mapel") || tugasLower.includes("pjok") || tugasLower.includes("kepala")) {
+        angkaKelasBinaan = "SEMUA"; 
+        labelKelas = "Semua Kelas";
     } else {
-        namaKelasBinaan = "Tidak Ada Binaan";
+        labelKelas = "Belum Ada Binaan";
     }
 
-    // 4. Tampilkan Teks Binaan di Layar (Misal: "Binaan Kelas 5")
+    // 4. Tampilkan Teks Binaan di Layar (Misal: "Binaan Kelas V")
     let elemenTeksBinaan = document.getElementById('teks-binaan');
     if(elemenTeksBinaan) {
-        elemenTeksBinaan.innerText = "Binaan " + namaKelasBinaan;
+        elemenTeksBinaan.innerText = labelKelas;
     }
 
-    // 5. Cetak Data Siswa ke Tabel
+    // 5. Filter Data Siswa
+    if (angkaKelasBinaan === "SEMUA") {
+        daftarSiswaBinaan = dataSiswaGlobal; // Mapel / Kepala lihat semua
+    } else if (angkaKelasBinaan !== "") {
+        daftarSiswaBinaan = dataSiswaGlobal.filter(siswa => {
+            // Cocokkan angka kelas (Misal: "5" == "5")
+            let kelasSiswa = String(siswa.Kelas || siswa.kelas || siswa.Kelas_Siswa || "");
+            return kelasSiswa === angkaKelasBinaan;
+        });
+    }
+
+    // 6. Cetak Data Siswa ke Tabel
     let tbodySiswa = document.getElementById('tabel-siswa');
     if(tbodySiswa) {
         tbodySiswa.innerHTML = ''; // Bersihkan tulisan "Memuat data..."
         
         if (daftarSiswaBinaan.length === 0) {
-            tbodySiswa.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-slate-500 italic">Tidak ada data siswa yang cocok dengan kelas ini.</td></tr>';
+            tbodySiswa.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-500 italic">Data siswa untuk kelas ${angkaKelasBinaan} tidak ditemukan.</td></tr>`;
         } else {
-            // Urutkan siswa berdasarkan nama agar rapi (Opsional)
-            daftarSiswaBinaan.sort((a, b) => {
-                let namaA = (a.Nama_Siswa || a.Nama || a.nama || "").toLowerCase();
-                let namaB = (b.Nama_Siswa || b.Nama || b.nama || "").toLowerCase();
-                return namaA.localeCompare(namaB);
-            });
-
             // Looping dan buat baris tabel
             daftarSiswaBinaan.forEach(siswa => {
                 let tr = document.createElement('tr');
@@ -126,6 +122,7 @@ function renderTabelBinaanGuru(currentUser, dataSiswaGlobal) {
         }
     }
 }
+</script>
 </script>
 
 <!-- ==================================================================== -->

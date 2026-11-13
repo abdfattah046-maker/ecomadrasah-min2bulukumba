@@ -1,400 +1,133 @@
-const SHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
+<!-- ==================================================================== -->
+<!-- MULAI KODE DASBOR GURU (TAMPILAN & LOGIKA KELAS)                     -->
+<!-- SILAKAN PASTE KODE INI UNTUK MENGGANTIKAN DASBOR GURU YANG LAMA      -->
+<!-- ==================================================================== -->
 
-// ==========================================
-// 1. FUNGSI GET (Mengambil Data dari Sheet)
-// ==========================================
-function doGet(e) {
-  const action = e.parameter.action;
-  try {
-    let result = { status: "success", data: [] };
-    
-    if (action === "getTeachers") {
-      result.data = getDataFromSheet("data guru");
-    } else if (action === "getStudents") {
-      result.data = getDataFromSheet("data siswa");
-    } else if (action === "listAccounts") {
-      result.data = getDataFromSheet("akun_pengguna");
-    } else if (action === "listMissions") {
-      result.data = getDataFromSheet("eco_missions");
-    } else if (action === "listSubmissions") {
-      result.data = getDataFromSheet("eco_submissions");
-    } else if (action === "listMaterials") {
-      result.data = getDataFromSheet("eco_materials");
-    } else if (action === "listWaste") {
-      result.data = getDataFromSheet("eco_waste");
-    } else if (action === "listEnergy") {
-      result.data = getDataFromSheet("eco_energy");
-    } else if (action === "listGreen") {
-      result.data = getDataFromSheet("eco_green");
-    } else if (action === "listPlants") {
-      result.data = getDataFromSheet("data_tanaman");
-    } else if (action === "getReport") {
-      result.data = generateFullReport();
+<div id="section-dasbor-guru" class="mt-6">
+    <!-- Header Teks Binaan -->
+    <div class="mb-4">
+        <p class="text-emerald-700 text-lg font-semibold">
+            Halo, <span id="nama-guru-login" class="font-bold">Guru</span> (TEACHER) – 
+            <span id="teks-binaan" class="text-emerald-600 font-bold bg-emerald-100 px-2 py-1 rounded">Binaan Kelas ...</span>
+        </p>
+    </div>
+
+    <!-- Tabel Siswa Binaan -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden mt-4">
+        <h3 class="text-md font-bold p-4 bg-slate-50 text-slate-800 border-b flex items-center">
+            <svg class="w-5 h-5 mr-2 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
+            </svg>
+            Daftar Siswa Binaan Anda
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-600 text-sm">
+                        <th class="p-4 font-semibold border-b">ID Siswa</th>
+                        <th class="p-4 font-semibold border-b">Nama Siswa</th>
+                        <th class="p-4 font-semibold border-b text-center">Kelas</th>
+                    </tr>
+                </thead>
+                <tbody id="tabel-siswa">
+                    <!-- Data siswa akan diisi otomatis dari Spreadsheet -->
+                    <tr>
+                        <td colspan="3" class="text-center py-6 text-slate-500">Memuat data siswa...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Script Logika Filter Guru & Siswa -->
+<script>
+// Panggil fungsi ini SETELAH proses login berhasil dan data siswa dari API sudah diambil
+// Contoh pemanggilan: renderTabelBinaanGuru(dataLoginGuru, dataSemuaSiswa);
+
+function renderTabelBinaanGuru(currentUser, dataSiswaGlobal) {
+    // 1. Masukkan Nama Guru ke layar
+    let elemenNama = document.getElementById('nama-guru-login');
+    if(elemenNama) {
+        elemenNama.innerText = currentUser.nama_guru || currentUser.Nama || currentUser.nama || "Guru";
+    }
+
+    // 2. Baca Kolom "Tugas" (Misal: "Guru Kelas 5", "Guru Mapel")
+    let tugasGuru = currentUser.Tugas || currentUser.tugas || ""; 
+    let tugasLower = tugasGuru.toLowerCase();
+
+    let namaKelasBinaan = "";
+    let daftarSiswaBinaan = [];
+
+    // 3. Logika Menentukan Kelas Binaan
+    if (tugasLower.includes("mapel") || tugasLower.includes("pjok") || tugasLower.includes("kepala")) {
+        // Guru Mapel / PJOK / Kepala Madrasah melihat SEMUA siswa
+        namaKelasBinaan = "Semua Kelas";
+        daftarSiswaBinaan = dataSiswaGlobal; 
+        
+    } else if (tugasLower.includes("kelas")) {
+        // Ekstrak angka dari teks "Guru Kelas 5" -> "5"
+        let angkaKelas = tugasGuru.replace(/[^0-9]/g, ''); 
+        
+        if(angkaKelas !== "") {
+            namaKelasBinaan = "Kelas " + angkaKelas;
+            // FILTER: Hanya ambil siswa yang angka kelasnya SAMA dengan angkaKelas guru
+            daftarSiswaBinaan = dataSiswaGlobal.filter(siswa => {
+                // Antisipasi perbedaan nama kolom di API (Kelas, kelas, atau Kelas_Siswa)
+                let kelasSiswa = siswa.Kelas || siswa.kelas || siswa.Kelas_Siswa || "";
+                return String(kelasSiswa) === String(angkaKelas);
+            });
+        } else {
+            namaKelasBinaan = "Tidak Ada Binaan";
+        }
     } else {
-      return jsonResponse({ status: "error", message: "Aksi GET tidak dikenal: " + action });
+        namaKelasBinaan = "Tidak Ada Binaan";
     }
-    
-    return jsonResponse(result);
-  } catch (error) {
-    return jsonResponse({ status: "error", message: error.toString() });
-  }
-}
 
-// ==========================================
-// 2. FUNGSI POST (Menyimpan/Mengubah Data)
-// ==========================================
-function doPost(e) {
-  try {
-    let contents = JSON.parse(e.postData.contents);
-    let action = contents.action;
-    let data = contents.data;
-    let resultData = null;
-    
-    if (action === "registerAccount") {
-      resultData = registerUserAccount(data);
-      
-    } else if (action === "updateProfile") {
-      resultData = updateProfileData(data);
-      
-    } else if (action === "uploadProfileDrive") {
-      resultData = uploadToGoogleDrive(data);
-      
-    } else if (action === "createMission") {
-      resultData = appendToSheet("eco_missions", [
-        data.mission_id || "MISI-" + Date.now(),
-        data.judul, data.deskripsi, data.kategori || "Umum",
-        normalizeClass(data.kelas_sasaran), data.poin || 50,
-        data.dibuat_oleh || "Guru", "aktif"
-      ]);
-      
-    } else if (action === "submitTask") {
-      resultData = upsertSubmission({
-        submission_id: "SUB-" + Date.now(),
-        student_id: data.student_id,
-        nama_siswa: data.nama_siswa,
-        kelas: normalizeClass(data.kelas),
-        mission_id: data.mission_id,
-        tanggal: new Date().toISOString().split('T')[0],
-        jawaban: data.jawaban,
-        bukti: data.bukti || "-",
-        status: "Menunggu Verifikasi",
-        nilai: 0,
-        umpan_balik: "-"
-      });
-      
-    } else if (action === "reviewSubmission") {
-      resultData = updateSubmissionReview(data.id, data.status, data.nilai, data.umpan_balik, data.guru_penilai);
-      
-    } else if (action === "createMaterial") {
-      resultData = appendToSheet("eco_materials", [
-        data.material_id || "MAT-" + Date.now(),
-        data.judul, data.mata_pelajaran || "Tematik / Lingkungan",
-        normalizeClass(data.kelas), data.topik, data.deskripsi, data.pembuat || "Guru"
-      ]);
-      
-    } else if (action === "logWaste") {
-      resultData = appendToSheet("eco_waste", [
-        "WASTE-" + Date.now(),
-        data.tanggal, data.lokasi,
-        Number(data.organik) || 0, Number(data.daur_ulang) || 0, Number(data.residu) || 0,
-        data.kategori || "Umum"
-      ]);
-      
-    } else if (action === "logEnergy") {
-      resultData = appendToSheet("eco_energy", [
-        "ENG-" + Date.now(),
-        data.tanggal, data.kategori, data.deskripsi, data.pelapor || "Siswa"
-      ]);
-      
-    } else if (action === "logGreen") {
-      resultData = appendToSheet("eco_green", [
-        "GRN-" + Date.now(),
-        data.tanggal, data.kategori, data.nama_tanaman || "-", data.deskripsi, data.pelapor || "Siswa"
-      ]);
-      
-    } else if (action === "addPlant") {
-      resultData = appendToSheet("data_tanaman", [
-        "PLANT-" + Date.now(),
-        data.nama_tanaman, data.jenis, data.lokasi, data.kondisi || "Sehat", data.penanggung_jawab
-      ]);
-      
-    } else {
-      return jsonResponse({ status: "error", message: "Aksi POST tidak dikenal: " + action });
+    // 4. Tampilkan Teks Binaan di Layar (Misal: "Binaan Kelas 5")
+    let elemenTeksBinaan = document.getElementById('teks-binaan');
+    if(elemenTeksBinaan) {
+        elemenTeksBinaan.innerText = "Binaan " + namaKelasBinaan;
     }
-    
-    return jsonResponse({ status: "success", data: resultData });
-  } catch (error) {
-    return jsonResponse({ status: "error", message: error.toString() });
-  }
-}
 
-// ==========================================
-// 3. FUNGSI LOGIKA AKUN & PROFIL
-// ==========================================
-function registerUserAccount(data) {
-  let ss = SpreadsheetApp.openById(SHEET_ID);
-  
-  ensureSheetExists("akun_pengguna", [
-    "user_id", "username", "role", "id_referensi", "status_pendaftaran", 
-    "status_akun", "tanggal_daftar", "disetujui_oleh", "tanggal_persetujuan", "foto_profil"
-  ]);
-  
-  if (data.role === "teacher") {
-    let teachers = getDataFromSheet("data guru");
-    let found = teachers.find(t => (t['id guru'] || t.id || "").toString().trim() === data.id_referensi.toString().trim());
-    if (!found) throw new Error("ID Guru tidak valid atau tidak ditemukan dalam sheet 'data guru'.");
-  } else if (data.role === "student") {
-    let students = getDataFromSheet("data siswa");
-    let found = students.find(s => (s['id siswa'] || s.id || "").toString().trim() === data.id_referensi.toString().trim());
-    if (!found) throw new Error("ID Siswa tidak valid atau tidak ditemukan dalam sheet 'data siswa'.");
-  } else {
-    throw new Error("Peran pendaftaran mandiri tidak diizinkan.");
-  }
-  
-  let userId = "USR-" + Date.now();
-  let sheet = ss.getSheetByName("akun_pengguna");
-  let defaultPhoto = "https://ui-avatars.com/api/?name=" + encodeURIComponent(data.username) + "&background=059669&color=fff";
-  
-  sheet.appendRow([
-    userId, data.username, data.role, data.id_referensi, 
-    "DISETUJUI", "AKTIF", new Date().toISOString(), "Sistem (Otomatis)", new Date().toISOString(), defaultPhoto
-  ]);
-  
-  logActivity("Sistem", "Pendaftaran Otomatis", `Akun ${data.username} terdaftar sebagai ${data.role} dan langsung aktif.`);
-  return { success: true, message: "Pendaftaran berhasil! Akun Anda langsung aktif, silakan masuk." };
-}
+    // 5. Cetak Data Siswa ke Tabel
+    let tbodySiswa = document.getElementById('tabel-siswa');
+    if(tbodySiswa) {
+        tbodySiswa.innerHTML = ''; // Bersihkan tulisan "Memuat data..."
+        
+        if (daftarSiswaBinaan.length === 0) {
+            tbodySiswa.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-slate-500 italic">Tidak ada data siswa yang cocok dengan kelas ini.</td></tr>';
+        } else {
+            // Urutkan siswa berdasarkan nama agar rapi (Opsional)
+            daftarSiswaBinaan.sort((a, b) => {
+                let namaA = (a.Nama_Siswa || a.Nama || a.nama || "").toLowerCase();
+                let namaB = (b.Nama_Siswa || b.Nama || b.nama || "").toLowerCase();
+                return namaA.localeCompare(namaB);
+            });
 
-function updateProfileData(data) {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  let sheet = ss.getSheetByName("akun_pengguna");
-  if (!sheet) throw new Error("Sheet akun_pengguna tidak ditemukan.");
-  
-  let rows = sheet.getDataRange().getValues();
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] == data.user_id || rows[i][3] == data.user_id || rows[i][1] == data.user_id) {
-      if(data.new_username) sheet.getRange(i + 1, 2).setValue(data.new_username);
-      if(data.foto_profil) sheet.getRange(i + 1, 10).setValue(data.foto_profil);
-      return { success: true, message: "Profil berhasil diperbarui." };
+            // Looping dan buat baris tabel
+            daftarSiswaBinaan.forEach(siswa => {
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                
+                let idSiswa = siswa.ID_Siswa || siswa.ID || siswa.id_siswa || '-';
+                let namaSiswa = siswa.Nama_Siswa || siswa.Nama || siswa.nama_siswa || '-';
+                let kelasSiswa = siswa.Kelas || siswa.kelas || '-';
+
+                tr.innerHTML = `
+                    <td class="border-b border-slate-200 p-4 text-slate-700">${idSiswa}</td>
+                    <td class="border-b border-slate-200 p-4 text-slate-700 font-medium">${namaSiswa}</td>
+                    <td class="border-b border-slate-200 p-4 text-slate-700 text-center">
+                        <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-semibold">${kelasSiswa}</span>
+                    </td>
+                `;
+                tbodySiswa.appendChild(tr);
+            });
+        }
     }
-  }
-  throw new Error("User ID tidak ditemukan saat memperbarui profil. Pastikan Anda sudah 'Buat Akun' terlebih dahulu.");
-
 }
+</script>
 
-function logActivity(adminUser, aksi, keterangan) {
-  let sheet = ensureSheetExists("log_aktivitas", ["log_id", "timestamp", "admin_user", "aksi", "keterangan"]);
-  sheet.appendRow(["LOG-" + Date.now(), new Date().toISOString(), adminUser, aksi, keterangan]);
-}
-
-// ==========================================
-// 4. FUNGSI GOOGLE DRIVE (BUAT FOLDER & UPLOAD)
-// ==========================================
-function getOrCreateProfileFolder() {
-  const FOLDER_NAME = "Foto Profil EcoSchool";
-  let folders = DriveApp.getFoldersByName(FOLDER_NAME);
-  
-  if (folders.hasNext()) {
-    return folders.next();
-  } else {
-    let newFolder = DriveApp.createFolder(FOLDER_NAME);
-    newFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    return newFolder;
-  }
-}
-
-function uploadToGoogleDrive(data) {
-  let folder = getOrCreateProfileFolder();
-  
-  let decoded = Utilities.base64Decode(data.base64Data);
-  let blob = Utilities.newBlob(decoded, data.mimeType, data.fileName);
-  let file = folder.createFile(blob);
-  
-  let directUrl = "https://drive.google.com/thumbnail?id=" + file.getId() + "&sz=w500";
-  
-  updateProfileData({
-    user_id: data.user_id,
-    new_username: data.new_username,
-    foto_profil: directUrl
-  });
-  
-  return { url: directUrl, message: "Foto tersimpan di Drive dan profil diperbarui." };
-}
-
-// ==========================================
-// 5. FUNGSI MEMBUAT SHEET OTOMATIS
-// ==========================================
-function ensureSheetExists(sheetName, headers) {
-  let ss = SpreadsheetApp.openById(SHEET_ID);
-  let sheet = ss.getSheetByName(sheetName);
-  
-  if (!sheet) {
-    sheet = ss.insertSheet(sheetName);
-    sheet.appendRow(headers);
-  } else {
-      if(sheetName === "akun_pengguna") {
-          let currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-          if(currentHeaders.indexOf("foto_profil") === -1) {
-              sheet.getRange(1, currentHeaders.length + 1).setValue("foto_profil");
-          }
-      }
-  }
-  return sheet;
-}
-
-function appendToSheet(sheetName, rowArray) {
-  let headers = [];
-  if (sheetName === "eco_missions") headers = ["mission_id", "judul", "deskripsi", "kategori", "kelas_sasaran", "poin", "dibuat_oleh", "status"];
-  else if (sheetName === "eco_submissions") headers = ["submission_id", "student_id", "nama_siswa", "kelas", "mission_id", "tanggal", "jawaban", "bukti", "status", "nilai", "umpan_balik"];
-  else if (sheetName === "eco_materials") headers = ["material_id", "judul", "mata_pelajaran", "kelas", "topik", "deskripsi", "pembuat"];
-  else if (sheetName === "eco_waste") headers = ["id", "tanggal", "lokasi", "organik", "daur_ulang", "residu", "kategori"];
-  else if (sheetName === "eco_energy") headers = ["id", "tanggal", "kategori", "deskripsi", "pelapor"];
-  else if (sheetName === "eco_green") headers = ["id", "tanggal", "kategori", "nama_tanaman", "deskripsi", "pelapor"];
-  else if (sheetName === "data_tanaman") headers = ["id", "nama_tanaman", "jenis", "lokasi", "kondisi", "penanggung_jawab"];
-  else headers = ["id", "tanggal", "data1", "data2"]; 
-
-  let sheet = ensureSheetExists(sheetName, headers);
-  sheet.appendRow(rowArray);
-  return { success: true };
-}
-
-function getDataFromSheet(sheetName) {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  let sheet = ss.getSheetByName(sheetName);
-  if (!sheet) return [];
-  
-  const rows = sheet.getDataRange().getValues();
-  if (rows.length <= 1) return [];
-  
-  const headers = rows[0].map(h => h.toString().trim().toLowerCase());
-  let result = [];
-  
-  for (let i = 1; i < rows.length; i++) {
-    let obj = {};
-    for (let j = 0; j < headers.length; j++) {
-      obj[headers[j]] = rows[i][j];
-    }
-    result.push(obj);
-  }
-  return result;
-}
-
-// ==========================================
-// 6. FUNGSI TUGAS & PENILAIAN GURU
-// ==========================================
-function upsertSubmission(subObj) {
-  let sheet = ensureSheetExists("eco_submissions", [
-    "submission_id", "student_id", "nama_siswa", "kelas", "mission_id", 
-    "tanggal", "jawaban", "bukti", "status", "nilai", "umpan_balik"
-  ]);
-  
-  let rows = sheet.getDataRange().getValues();
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][1] == subObj.student_id && rows[i][4] == subObj.mission_id) {
-      sheet.getRange(i + 1, 6).setValue(subObj.tanggal);
-      sheet.getRange(i + 1, 7).setValue(subObj.jawaban);
-      sheet.getRange(i + 1, 9).setValue(subObj.status);
-      return subObj;
-    }
-  }
-  
-  sheet.appendRow([
-    subObj.submission_id, subObj.student_id, subObj.nama_siswa, subObj.kelas, 
-    subObj.mission_id, subObj.tanggal, subObj.jawaban, subObj.bukti, 
-    subObj.status, subObj.nilai, subObj.umpan_balik
-  ]);
-  return subObj;
-}
-
-function updateSubmissionReview(id, status, nilai, umpan_balik, guru) {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  let sheet = ss.getSheetByName("eco_submissions");
-  if (!sheet) throw new Error("Sheet pengumpulan tidak ditemukan.");
-  
-  let rows = sheet.getDataRange().getValues();
-  let statusText = status === "verified" ? "Terverifikasi" : (status === "revision_required" ? "Perlu Perbaikan" : "Ditolak");
-  
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] == id || rows[i][1] == id) {
-      sheet.getRange(i + 1, 9).setValue(statusText);
-      sheet.getRange(i + 1, 10).setValue(nilai);
-      sheet.getRange(i + 1, 11).setValue(umpan_balik + " (Dinilai oleh: " + guru + ")");
-      return { success: true };
-    }
-  }
-  throw new Error("ID Pengumpulan tidak ditemukan.");
-}
-
-// ==========================================
-// 7. FUNGSI LAPORAN & NORMALISASI
-// ==========================================
-function generateFullReport() {
-  let teachers = getDataFromSheet("data guru");
-  let students = getDataFromSheet("data siswa");
-  let accounts = getDataFromSheet("akun_pengguna");
-  let missions = getDataFromSheet("eco_missions");
-  let submissions = getDataFromSheet("eco_submissions");
-  let materials = getDataFromSheet("eco_materials");
-  let waste = getDataFromSheet("eco_waste");
-  let energy = getDataFromSheet("eco_energy");
-  let green = getDataFromSheet("eco_green");
-  let plants = getDataFromSheet("data_tanaman");
-  
-  let kelasCounts = {};
-  students.forEach(s => {
-    let k = normalizeClass(s.kelas || s['kelas'] || "VI");
-    kelasCounts[k] = (kelasCounts[k] || 0) + 1;
-  });
-  
-  let totalNilai = 0, countDinilai = 0;
-  let menunggu = 0, terverifikasi = 0, perbaikan = 0;
-  let totalPoinSiswa = 0;
-  
-  submissions.forEach(sub => {
-    let st = (sub.status || "").toLowerCase();
-    if (st.includes("menunggu")) menunggu++;
-    if (st.includes("terverifikasi")) {
-      terverifikasi++;
-      totalNilai += Number(sub.nilai || 0);
-      countDinilai++;
-      totalPoinSiswa += 50; 
-    }
-    if (st.includes("perbaikan")) perbaikan++;
-  });
-  
-  return {
-    total_guru: teachers.length,
-    total_siswa: students.length,
-    total_akun: accounts.length,
-    jumlah_siswa_per_kelas: kelasCounts,
-    misi_aktif: missions.length,
-    total_materi: materials.length,
-    total_pengumpulan: submissions.length,
-    tugas_terverifikasi: terverifikasi,
-    menunggu_verifikasi: menunggu,
-    perlu_perbaikan: perbaikan,
-    rata_rata_nilai: countDinilai > 0 ? (totalNilai / countDinilai).toFixed(1) : 0,
-    total_poin_siswa: totalPoinSiswa,
-    total_ecowaste_kegiatan: waste.length,
-    total_ecoenergy_kegiatan: energy.length,
-    total_ecogreen_kegiatan: green.length,
-    total_tanaman: plants.length
-  };
-}
-
-function normalizeClass(kelasStr) {
-  if (!kelasStr) return "VI";
-  let str = kelasStr.toString().toUpperCase().trim();
-  str = str.replace("GURU KELAS", "").replace("KELAS", "").replace("GURU", "").trim();
-  if (str === "6" || str === "VI" || str.includes("VI") || str.includes("6")) return "VI";
-  if (str === "5" || str === "V" || str.includes("V") || str.includes("5")) return "V";
-  if (str === "4" || str === "IV" || str.includes("IV") || str.includes("4")) return "IV";
-  if (str === "3" || str === "III" || str.includes("III") || str.includes("3")) return "III";
-  if (str === "2" || str === "II" || str.includes("II") || str.includes("2")) return "II";
-  if (str === "1" || str === "I" || str.includes("I") || str.includes("1")) return "I";
-  return str || "VI";
-}
-
-function jsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+<!-- ==================================================================== -->
+<!-- AKHIR KODE DASBOR GURU                                               -->
+<!-- ==================================================================== -->

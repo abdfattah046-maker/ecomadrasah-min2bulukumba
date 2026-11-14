@@ -1,130 +1,1331 @@
-<!-- ==================================================================== -->
-<!-- MULAI KODE DASBOR GURU (TAMPILAN & LOGIKA KELAS)                     -->
-<!-- SILAKAN PASTE KODE INI UNTUK MENGGANTIKAN DASBOR GURU YANG LAMA      -->
-<!-- ==================================================================== -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoMadrasah AI - MIN 2 Bulukumba</title>
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#064e3b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/9/91/Logo_Kementerian_Agama_R.I._(2012).png">
+    <link rel="manifest" href="manifest.json">
 
-<div id="section-dasbor-guru" class="mt-6">
-    <!-- Header Teks Binaan -->
-    <div class="mb-4">
-       <p class="text-emerald-700 text-lg font-semibold">
-    Halo, <span id="nama-guru-login">Guru</span> (TEACHER) – 
-    <span id="teks-binaan" class="text-emerald-600 font-bold">Binaan Kelas ...</span>
-</p>
-    </div>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased flex h-screen overflow-hidden">
 
-    <!-- Tabel Siswa Binaan -->
-    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden mt-4">
-        <h3 class="text-md font-bold p-4 bg-slate-50 text-slate-800 border-b flex items-center">
-            <svg class="w-5 h-5 mr-2 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
-            </svg>
-            Daftar Siswa Binaan Anda
-        </h3>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-100 text-slate-600 text-sm">
-                        <th class="p-4 font-semibold border-b">ID Siswa</th>
-                        <th class="p-4 font-semibold border-b">Nama Siswa</th>
-                        <th class="p-4 font-semibold border-b text-center">Kelas</th>
-                    </tr>
-                </thead>
-                <tbody id="tabel-siswa">
-                    <!-- Data siswa akan diisi otomatis dari Spreadsheet -->
-                    <tr>
-                        <td colspan="3" class="text-center py-6 text-slate-500">Memuat data siswa...</td>
-                    </tr>
-                </tbody>
-            </table>
+    <!-- ================= LOGIN OVERLAY ================= -->
+    <div id="authOverlay" class="fixed inset-0 bg-emerald-950 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-emerald-100 my-auto relative">
+            
+            <div class="bg-emerald-900 p-6 text-white text-center relative">
+                <div class="w-16 h-16 bg-white rounded-2xl mx-auto flex items-center justify-center p-1 shadow-lg mb-2 overflow-hidden">
+                    <div class="w-full h-full flex items-center justify-center bg-white">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Logo_Kementerian_Agama_RI.svg/512px-Logo_Kementerian_Agama_RI.svg.png" 
+                             class="w-full h-full object-contain" 
+                             alt="Logo Kemenag">
+                    </div>
+                </div>
+                <h1 class="text-xl font-extrabold tracking-tight">EcoMadrasah AI</h1>
+                <p class="text-xs font-bold text-emerald-200 mt-1">MIN 2 Bulukumba</p>
+                <div class="flex bg-emerald-950/60 p-1 rounded-xl mt-4 max-w-xs mx-auto">
+                    <button onclick="switchAuthTab('login')" id="authTabLogin" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-emerald-900 shadow-sm transition">Masuk</button>
+                    <button onclick="switchAuthTab('register')" id="authTabRegister" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-emerald-200 transition">Buat Akun</button>
+                </div>
+            </div>
+
+            <!-- FORM LOGIN -->
+            <form id="formLogin" onsubmit="handleLogin(event)" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Username (Atau Nama Lengkap di Sheet)</label>
+                    <input type="text" id="loginUser" required placeholder="Contoh: Abdul Fattah / Abil Daffa" class="w-full bg-slate-50 border rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Peran Pengguna</label>
+                    <select id="loginRole" class="w-full bg-slate-50 border rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500">
+                        <option value="student">Siswa</option>
+                        <option value="teacher">Guru</option>
+                        <option value="principal">Kepala Madrasah</option>
+                        <option value="admin">Administrator Madrasah</option>
+                    </select>
+                </div>
+                <div id="loginError" class="text-rose-500 font-semibold hidden"></div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-md cursor-pointer">
+                    Masuk ke Sistem
+                </button>
+            </form>
+
+            <!-- FORM PENDAFTARAN MANDIRI (LANGSUNG AKTIF) -->
+            <form id="formRegister" onsubmit="handleRegister(event)" class="p-6 space-y-3 hidden text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Daftar Sebagai</label>
+                    <select id="regRole" onchange="toggleRegFields()" class="w-full bg-slate-50 border rounded-xl px-3 py-2.5">
+                        <option value="student">Siswa</option>
+                        <option value="teacher">Guru</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Username Baru</label>
+                    <input type="text" id="regUsername" required placeholder="Buat username" class="w-full bg-slate-50 border rounded-xl px-3 py-2.5">
+                </div>
+                <div id="regIdContainer">
+                    <label class="block font-bold text-slate-700 mb-1" id="regIdLabel">ID Siswa (Sesuai Data Sheets)</label>
+                    <input type="text" id="regIdRef" required placeholder="Contoh: S-01 atau G-01" class="w-full bg-slate-50 border rounded-xl px-3 py-2.5">
+                </div>
+                <div id="regError" class="text-rose-500 font-semibold hidden"></div>
+                <div id="regSuccess" class="text-emerald-600 font-semibold hidden">Pendaftaran berhasil! Akun langsung aktif, silakan masuk.</div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-md cursor-pointer">
+                    Daftar &amp; Langsung Aktif
+                </button>
+            </form>
         </div>
     </div>
-</div>
 
-<!-- Script Logika Filter Guru & Siswa -->
-<script>
-<!-- Script Logika Filter Guru & Siswa -->
-<script>
-// Panggil fungsi ini SETELAH proses login berhasil dan data siswa dari API sudah diambil
-// Contoh pemanggilan: renderTabelBinaanGuru(dataLoginGuru, dataSemuaSiswa);
+    <!-- ================= SIDEBAR & NAVIGATION ================= -->
+    <div id="mobileSidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 z-20 hidden md:hidden transition-opacity"></div>
+    <aside id="sidebar" class="w-64 bg-emerald-900 text-white flex flex-col z-30 transition-all duration-300 -translate-x-full md:translate-x-0 absolute md:relative h-full shrink-0 shadow-lg">
+        <div class="p-5 border-b border-emerald-800 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shadow-md overflow-hidden">
+                    <img id="sidebarUserPhoto" src="https://ui-avatars.com/api/?name=User&background=059669&color=fff" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <h1 id="sidebarUserName" class="font-bold text-xs leading-tight truncate w-32">Pengguna</h1>
+                    <span id="sidebarRoleLabel" class="text-[9px] bg-emerald-800 text-emerald-200 px-2 py-0.5 rounded font-bold uppercase">Peran</span>
+                </div>
+            </div>
+            <button onclick="toggleSidebar()" class="md:hidden text-emerald-300 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
 
-function renderTabelBinaanGuru(currentUser, dataSiswaGlobal) {
-    // 1. Masukkan Nama Guru ke layar
-    let elemenNama = document.getElementById('nama-guru-login');
-    if(elemenNama) {
-        elemenNama.innerText = currentUser.nama_guru || currentUser.Nama || currentUser.nama || "Guru";
-    }
+        <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+            <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-emerald-800 text-white transition"><i class="fa-solid fa-chart-pie w-5 text-center"></i><span>1. Dashboard</span></a>
+            <a href="#" onclick="switchTab('profil')" id="nav-profil" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-200 hover:bg-emerald-800/60 transition"><i class="fa-solid fa-id-badge w-5 text-center"></i><span>2. Profil Saya</span></a>
+            <a href="#" onclick="switchTab('ecowaste')" id="nav-ecowaste" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-200 hover:bg-emerald-800/60 transition"><i class="fa-solid fa-recycle w-5 text-center"></i><span>3. EcoWaste</span></a>
+            <a href="#" onclick="switchTab('ecoenergy')" id="nav-ecoenergy" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-200 hover:bg-emerald-800/60 transition"><i class="fa-solid fa-bolt w-5 text-center"></i><span>4. EcoEnergy</span></a>
+            <a href="#" onclick="switchTab('ecogreen')" id="nav-ecogreen" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-200 hover:bg-emerald-800/60 transition"><i class="fa-solid fa-seedling w-5 text-center"></i><span>5. EcoGreen</span></a>
+            <a href="#" onclick="switchTab('ecomission')" id="nav-ecomission" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-200 hover:bg-emerald-800/60 transition"><i class="fa-solid fa-shield-halved w-5 text-center"></i><span>6. EcoMission &amp; Quest</span></a>
+            <a href="#" onclick="switchTab('ecoai')" id="nav-ecoai" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-200 hover:bg-emerald-800/60 transition"><i class="fa-solid fa-wand-magic-sparkles w-5 text-center"></i><span>7. EcoAI Learning</span></a>
+            <a href="#" onclick="switchTab('ecoquest')" id="nav-ecoquest" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-200 hover:bg-emerald-800/60 transition"><i class="fa-solid fa-gamepad w-5 text-center"></i><span>8. EcoQuest</span></a>
+            <a href="#" onclick="switchTab('ecoimpact')" id="nav-ecoimpact" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-200 hover:bg-emerald-800/60 transition"><i class="fa-solid fa-chart-line w-5 text-center"></i><span>9. EcoImpact</span></a>
+            <a href="#" onclick="switchTab('laporan')" id="nav-laporan" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-200 hover:bg-emerald-800/60 transition"><i class="fa-solid fa-file-lines w-5 text-center"></i><span>10. Laporan</span></a>
+            <a href="#" onclick="switchTab('pengaturan')" id="nav-pengaturan" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-emerald-200 hover:bg-emerald-800/60 transition"><i class="fa-solid fa-gear w-5 text-center"></i><span>11. Pengaturan</span></a>
+        </nav>
 
-    // 2. Baca Kolom "Tugas" (Contoh di Sheet: "Guru Kelas 5")
-    let tugasGuru = currentUser.Tugas || currentUser.tugas || ""; 
-    let tugasLower = tugasGuru.toLowerCase();
+        <div class="p-4 border-t border-emerald-800 bg-emerald-950/30 space-y-2">
+            <!-- PWA Install Button -->
+            <button id="installAppBtn" onclick="installPWA()" class="hidden w-full bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs py-2 px-3 rounded-lg font-bold transition flex items-center justify-center space-x-2 cursor-pointer shadow-lg mb-2">
+                <i class="fa-solid fa-download"></i><span>Instal ke Perangkat</span>
+            </button>
+            <button onclick="handleLogout()" class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs py-2 px-3 rounded-lg font-medium transition flex items-center justify-center space-x-2 cursor-pointer">
+                <i class="fa-solid fa-right-from-bracket"></i><span>Keluar (Logout)</span>
+            </button>
+        </div>
+    </aside>
 
-    let angkaKelasBinaan = "";
-    let labelKelas = "";
-    let daftarSiswaBinaan = [];
+    <!-- ================= MAIN CONTENT ================= -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 z-20 shrink-0">
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleSidebar()" class="md:hidden w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-bars text-base"></i></button>
+                <div>
+                    <h2 class="font-extrabold text-slate-800 text-xs sm:text-sm md:text-base">MIN 2 Bulukumba, Sulawesi Selatan</h2>
+                    <p class="text-[10px] sm:text-xs text-emerald-600 font-semibold">Smart Green School Ecosystem</p>
+                </div>
+            </div>
+            <span id="apiStatusBadge" class="bg-amber-50 text-amber-700 border border-amber-200 text-xs px-3 py-1 rounded-full font-bold">API Belum Diset</span>
+        </header>
 
-    // 3. Logika Menentukan Kelas Binaan (Membaca Teks Spesifik)
-    if (tugasLower.includes("kelas 1")) { angkaKelasBinaan = "1"; labelKelas = "Binaan Kelas I"; }
-    else if (tugasLower.includes("kelas 2")) { angkaKelasBinaan = "2"; labelKelas = "Binaan Kelas II"; }
-    else if (tugasLower.includes("kelas 3")) { angkaKelasBinaan = "3"; labelKelas = "Binaan Kelas III"; }
-    else if (tugasLower.includes("kelas 4")) { angkaKelasBinaan = "4"; labelKelas = "Binaan Kelas IV"; }
-    else if (tugasLower.includes("kelas 5")) { angkaKelasBinaan = "5"; labelKelas = "Binaan Kelas V"; }
-    else if (tugasLower.includes("kelas 6")) { angkaKelasBinaan = "6"; labelKelas = "Binaan Kelas VI"; }
-    else if (tugasLower.includes("mapel") || tugasLower.includes("pjok") || tugasLower.includes("kepala")) {
-        angkaKelasBinaan = "SEMUA"; 
-        labelKelas = "Semua Kelas";
-    } else {
-        labelKelas = "Belum Ada Binaan";
-    }
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 relative" id="mainContainer">
+            
+            <!-- DASHBOARD -->
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                <div class="bg-white p-5 rounded-2xl border shadow-xs">
+                    <p class="text-xs font-semibold text-slate-400 uppercase">Status Pengguna</p>
+                    <h4 id="dashUserRoleTitle" class="text-base font-extrabold text-emerald-700 mt-1">Memuat...</h4>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border shadow-xs"><p class="text-xs font-semibold text-slate-400 uppercase">Total Misi Aktif</p><h4 id="dashStatMissions" class="text-xl font-extrabold text-slate-800 mt-1">0</h4></div>
+                    <div class="bg-white p-5 rounded-2xl border shadow-xs"><p class="text-xs font-semibold text-slate-400 uppercase">Tugas Terverifikasi</p><h4 id="dashStatVerified" class="text-xl font-extrabold text-emerald-700 mt-1">0</h4></div>
+                    <div class="bg-white p-5 rounded-2xl border shadow-xs"><p class="text-xs font-semibold text-slate-400 uppercase">Materi Pembelajaran</p><h4 id="dashStatMaterials" class="text-xl font-extrabold text-blue-700 mt-1">0</h4></div>
+                    <div class="bg-white p-5 rounded-2xl border shadow-xs"><p class="text-xs font-semibold text-slate-400 uppercase">Total Poin Siswa</p><h4 id="dashStatPoints" class="text-xl font-extrabold text-purple-700 mt-1">0 Poin</h4></div>
+                </div>
+                <div id="teacherDashboardSection" class="hidden bg-white p-6 rounded-2xl border shadow-xs space-y-4">
+                    <h4 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-chalkboard-user mr-1 text-emerald-600"></i> Siswa Kelas Binaan Anda</h4>
+                    <div id="teacherClassStudentsList" class="overflow-x-auto text-xs">Memuat data siswa...</div>
+                </div>
+            </section>
 
-    // 4. Tampilkan Teks Binaan di Layar (Misal: "Binaan Kelas V")
-    let elemenTeksBinaan = document.getElementById('teks-binaan');
-    if(elemenTeksBinaan) {
-        elemenTeksBinaan.innerText = labelKelas;
-    }
+            <!-- PROFIL SAYA -->
+            <section id="tab-profil" class="tab-content hidden space-y-6">
+                <h3 class="text-2xl font-extrabold text-slate-900">Profil Pengguna</h3>
+                <div class="bg-white p-6 rounded-2xl border shadow-xs max-w-lg space-y-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center shadow-md overflow-hidden border-2 border-emerald-500 relative group">
+                            <img id="profilePagePhoto" src="" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase mb-1" id="profileRole">Role</p>
+                            <h4 id="profileName" class="text-xl font-extrabold text-slate-800">Nama</h4>
+                            <p class="text-xs text-slate-500 mt-1" id="profileIdRef">ID: -</p>
+                        </div>
+                    </div>
+                    
+                    <form onsubmit="handleUpdateProfile(event)" class="space-y-4 pt-4 border-t text-xs">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Ubah Foto Profil (Opsional)</label>
+                            <input type="file" id="profilePhotoInput" accept="image/*" class="w-full bg-slate-50 border rounded-xl px-3 py-2 cursor-pointer">
+                            <p class="text-[10px] text-slate-400 mt-1">*Gambar akan otomatis diunggah ke folder Google Drive EcoMadrasah.</p>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">Ubah Username Anda</label>
+                            <input type="text" id="profileUsernameInput" required class="w-full bg-slate-50 border rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <button type="submit" id="btnUpdateProfile" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition shadow-md cursor-pointer">
+                            Simpan Perubahan Profil
+                        </button>
+                    </form>
+                </div>
+            </section>
 
-    // 5. Filter Data Siswa
-    if (angkaKelasBinaan === "SEMUA") {
-        daftarSiswaBinaan = dataSiswaGlobal; // Mapel / Kepala lihat semua
-    } else if (angkaKelasBinaan !== "") {
-        daftarSiswaBinaan = dataSiswaGlobal.filter(siswa => {
-            // Cocokkan angka kelas (Misal: "5" == "5")
-            let kelasSiswa = String(siswa.Kelas || siswa.kelas || siswa.Kelas_Siswa || "");
-            return kelasSiswa === angkaKelasBinaan;
+            <!-- ECOWASTE -->
+            <section id="tab-ecowaste" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-slate-900">EcoWaste — Pengelolaan Sampah</h3>
+                        <p class="text-sm text-slate-500">Pencatatan sampah organik, daur ulang, dan residu madrasah.</p>
+                    </div>
+                    <button onclick="openWasteModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2.5 rounded-xl font-semibold cursor-pointer">
+                        <i class="fa-solid fa-plus mr-1"></i> Catat Sampah
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border shadow-xs"><p class="text-xs font-semibold text-slate-400 uppercase">Total Organik</p><h4 id="statTotalOrganic" class="text-xl font-extrabold text-emerald-700 mt-1">0 kg</h4></div>
+                    <div class="bg-white p-5 rounded-2xl border shadow-xs"><p class="text-xs font-semibold text-slate-400 uppercase">Total Didaur Ulang</p><h4 id="statTotalRecycled" class="text-xl font-extrabold text-blue-700 mt-1">0 kg</h4></div>
+                    <div class="bg-white p-5 rounded-2xl border shadow-xs"><p class="text-xs font-semibold text-slate-400 uppercase">Total Residu</p><h4 id="statTotalResidue" class="text-xl font-extrabold text-rose-700 mt-1">0 kg</h4></div>
+                </div>
+                <div class="bg-white rounded-2xl border shadow-xs overflow-hidden">
+                    <div class="p-4 border-b font-bold text-xs text-slate-700">Riwayat Pencatatan EcoWaste</div>
+                    <div class="overflow-x-auto w-full pb-2"><table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-400 uppercase border-b whitespace-nowrap">
+                            <tr><th class="p-3">Tanggal</th><th class="p-3">Lokasi</th><th class="p-3">Organik (kg)</th><th class="p-3">Didaur Ulang (kg)</th><th class="p-3">Residu (kg)</th></tr>
+                        </thead>
+                        <tbody id="wasteTableBody" class="divide-y whitespace-nowrap"><tr><td colspan="5" class="p-4 text-center text-slate-400">Memuat data...</td></tr></tbody>
+                    </table></div>
+                </div>
+            </section>
+
+            <!-- ECOENERGY -->
+            <section id="tab-ecoenergy" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-slate-900">EcoEnergy &amp; Air</h3>
+                        <p class="text-sm text-slate-500">Pemantauan konservasi energi dan listrik madrasah.</p>
+                    </div>
+                    <button onclick="openEnergyModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2.5 rounded-xl font-semibold cursor-pointer">
+                        <i class="fa-solid fa-plus mr-1"></i> Catat Kegiatan Energi
+                    </button>
+                </div>
+                <div class="bg-white rounded-2xl border shadow-xs overflow-hidden">
+                    <div class="p-4 border-b font-bold text-xs text-slate-700">Riwayat Konservasi Energi</div>
+                    <div class="overflow-x-auto w-full pb-2"><table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-400 uppercase border-b whitespace-nowrap">
+                            <tr><th class="p-3">Tanggal</th><th class="p-3">Kategori</th><th class="p-3">Deskripsi Kegiatan</th><th class="p-3">Pelapor</th></tr>
+                        </thead>
+                        <tbody id="energyTableBody" class="divide-y whitespace-nowrap"><tr><td colspan="4" class="p-4 text-center text-slate-400">Memuat data...</td></tr></tbody>
+                    </table></div>
+                </div>
+            </section>
+
+            <!-- ECOGREEN -->
+            <section id="tab-ecogreen" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-slate-900">EcoGreen — Penghijauan &amp; Apotek Hidup</h3>
+                        <p class="text-sm text-slate-500">Inventaris tanaman dan perawatan lingkungan sekolah.</p>
+                    </div>
+                    <div class="space-x-2">
+                        <button onclick="openGreenModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2.5 rounded-xl font-semibold cursor-pointer"><i class="fa-solid fa-plus mr-1"></i> Catat Kegiatan</button>
+                        <button onclick="openPlantModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4 py-2.5 rounded-xl font-semibold cursor-pointer"><i class="fa-solid fa-seedling mr-1"></i> Tambah Tanaman</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-2xl border shadow-xs overflow-hidden">
+                        <div class="p-4 border-b font-bold text-xs text-slate-700">Inventaris Tanaman Madrasah</div>
+                        <div class="overflow-x-auto w-full pb-2"><table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-400 uppercase border-b whitespace-nowrap"><tr><th class="p-3">Nama</th><th class="p-3">Jenis</th><th class="p-3">Lokasi</th><th class="p-3">Kondisi</th></tr></thead>
+                            <tbody id="plantTableBody" class="divide-y whitespace-nowrap"><tr><td colspan="4" class="p-4 text-center text-slate-400">Memuat tanaman...</td></tr></tbody>
+                        </table></div>
+                    </div>
+                    <div class="bg-white rounded-2xl border shadow-xs overflow-hidden">
+                        <div class="p-4 border-b font-bold text-xs text-slate-700">Riwayat Kegiatan Penghijauan</div>
+                        <div class="overflow-x-auto w-full pb-2"><table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-400 uppercase border-b whitespace-nowrap"><tr><th class="p-3">Tanggal</th><th class="p-3">Tanaman</th><th class="p-3">Deskripsi</th></tr></thead>
+                            <tbody id="greenTableBody" class="divide-y whitespace-nowrap"><tr><td colspan="3" class="p-4 text-center text-slate-400">Memuat kegiatan...</td></tr></tbody>
+                        </table></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ECOMISSION -->
+            <section id="tab-ecomission" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-slate-900">EcoMission &amp; Quest</h3>
+                        <p class="text-sm text-slate-500">Kelola misi dan verifikasi tugas siswa secara real-time.</p>
+                    </div>
+                    <div id="teacherActionBtnContainer"></div>
+                </div>
+
+                <div id="missionAlertBox" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="missionListContainer">Memuat misi...</div>
+
+                <div id="studentSubmitCard" class="hidden bg-white p-6 rounded-2xl border-2 border-emerald-500 shadow-lg space-y-4 text-xs max-h-[85vh] overflow-y-auto">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <h4 class="font-bold text-emerald-900 text-sm" id="submitMissionTitle">Kirim Tugas</h4>
+                        <button onclick="document.getElementById('studentSubmitCard').classList.add('hidden')" class="text-slate-400 font-bold text-base cursor-pointer">&times;</button>
+                    </div>
+                    <p id="submitMissionInstructions" class="text-slate-700 bg-emerald-50 p-3 rounded-xl">-</p>
+                    <input type="hidden" id="activeMissionId">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Tanggal Pelaksanaan *</label>
+                        <input type="date" id="subDate" required class="w-full bg-slate-50 border rounded-xl px-3 py-2 mb-3">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Laporan Kegiatan *</label>
+                        <textarea id="subTextAnswer" rows="4" placeholder="Tuliskan laporan kegiatan Anda..." class="w-full bg-slate-50 border rounded-xl p-3 focus:outline-none"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-2 pt-2">
+                        <button onclick="document.getElementById('studentSubmitCard').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
+                        <button onclick="submitStudentTask()" id="btnSubmitTask" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold cursor-pointer">Kirim ke Server</button>
+                    </div>
+                </div>
+
+                <div id="teacherReviewPanel" class="hidden bg-white p-6 rounded-2xl border shadow-xs space-y-4 text-xs">
+                    <h4 class="font-bold text-emerald-900 text-sm"><i class="fa-solid fa-check-to-slot mr-1"></i> Panel Penilaian Tugas Siswa</h4>
+                    <div id="teacherSubmissionsQueue" class="space-y-3">Memuat antrean...</div>
+                </div>
+            </section>
+
+            <!-- ECOAI LEARNING -->
+            <section id="tab-ecoai" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-slate-900">EcoAI Learning Assistant</h3>
+                        <p class="text-sm text-slate-500">Materi pembelajaran berbasis AI & lingkungan madrasah.</p>
+                    </div>
+                    <div id="teacherMaterialBtnContainer"></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white rounded-2xl border shadow-xs flex flex-col h-[75vh] md:h-[500px] overflow-hidden">
+                        <div class="p-4 border-b bg-emerald-50 flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center text-lg shadow"><i class="fa-solid fa-robot"></i></div>
+                            <div>
+                                <h4 class="font-bold text-emerald-900">Tanya EcoAI</h4>
+                                <p class="text-[10px] text-emerald-700">Asisten Pintar Lingkungan MIN 2 Bulukumba</p>
+                            </div>
+                        </div>
+                        <div id="ecoAiChatBox" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 text-sm">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex shrink-0 items-center justify-center text-xs"><i class="fa-solid fa-robot"></i></div>
+                                <div class="bg-white p-3 rounded-2xl rounded-tl-none border shadow-sm text-slate-700 max-w-[85%]">
+                                    Halo! Saya EcoAI. Karena sistem server saat ini sedang difokuskan pada stabilitas pelaporan, mode obrolan AI dinonaktifkan sementara waktu.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 border-t bg-white">
+                            <form onsubmit="event.preventDefault(); alert('Sistem chat AI dinonaktifkan untuk stabilisasi.');" class="flex space-x-2 opacity-50">
+                                <input type="text" disabled placeholder="Ketik pertanyaanmu di sini..." class="flex-1 bg-slate-50 border rounded-xl px-4 py-2.5 text-sm cursor-not-allowed">
+                                <button type="submit" disabled class="bg-slate-400 text-white px-5 py-2.5 rounded-xl font-bold cursor-not-allowed"><i class="fa-solid fa-paper-plane"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border shadow-xs h-[75vh] md:h-[500px] flex flex-col">
+                        <div class="p-4 border-b bg-slate-50 font-bold text-emerald-900 text-sm flex justify-between items-center">
+                            <span><i class="fa-solid fa-book-open mr-2"></i>Materi dari Guru</span>
+                        </div>
+                        <div id="materialListContainer" class="flex-1 overflow-y-auto p-4 space-y-3">
+                            <div class="text-center text-slate-400 text-xs mt-4">Memuat materi pembelajaran...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ECOQUEST GAMIFIKASI -->
+            <section id="tab-ecoquest" class="tab-content hidden space-y-6">
+                <h3 class="text-2xl font-extrabold text-slate-900">EcoQuest Gamifikasi &amp; Pencapaian</h3>
+                <div class="bg-white p-6 rounded-2xl border shadow-xs space-y-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl"><i class="fa-solid fa-trophy"></i></div>
+                        <div>
+                            <h4 id="questUserName" class="font-bold text-base text-slate-800">Siswa</h4>
+                            <p class="text-xs text-emerald-600 font-semibold" id="questUserScore">Total Poin: 0 Poin | Status: EcoChampion</p>
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t">
+                        <h5 class="font-bold text-slate-700 text-sm mb-2">Badge Pencapaian Adiwiyata:</h5>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center"><i class="fa-solid fa-recycle text-emerald-600 text-lg mb-1"></i><p class="font-bold text-emerald-900">Pejuang Sampah</p></div>
+                            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-center"><i class="fa-solid fa-bolt text-amber-600 text-lg mb-1"></i><p class="font-bold text-amber-900">Penjaga Energi</p></div>
+                            <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-center"><i class="fa-solid fa-seedling text-blue-600 text-lg mb-1"></i><p class="font-bold text-blue-900">Sahabat Tanaman</p></div>
+                            <div class="p-3 bg-purple-50 border border-purple-200 rounded-xl text-center"><i class="fa-solid fa-wand-magic-sparkles text-purple-600 text-lg mb-1"></i><p class="font-bold text-purple-900">EcoLearner</p></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ECOIMPACT MONITORING -->
+            <section id="tab-ecoimpact" class="tab-content hidden space-y-6">
+                <h3 class="text-2xl font-extrabold text-slate-900">EcoImpact Monitoring Dampak</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="impactStatsGrid">
+                    <div class="bg-white p-5 rounded-2xl border shadow-xs"><p class="text-xs font-semibold text-slate-400 uppercase">Total Kegiatan Lingkungan</p><h4 id="impactTotalActs" class="text-xl font-extrabold text-emerald-700 mt-1">0</h4></div>
+                    <div class="bg-white p-5 rounded-2xl border shadow-xs"><p class="text-xs font-semibold text-slate-400 uppercase">Total Tanaman Tercatat</p><h4 id="impactTotalPlants" class="text-xl font-extrabold text-blue-700 mt-1">0</h4></div>
+                    <div class="bg-white p-5 rounded-2xl border shadow-xs"><p class="text-xs font-semibold text-slate-400 uppercase">Tugas Terverifikasi</p><h4 id="impactTotalVerified" class="text-xl font-extrabold text-purple-700 mt-1">0</h4></div>
+                </div>
+            </section>
+
+            <!-- LAPORAN KEPALA MADRASAH -->
+            <section id="tab-laporan" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-slate-900">Laporan Agregat Kepala Madrasah</h3>
+                        <p class="text-sm text-slate-500">Data real-time seluruh kelas di MIN 2 Bulukumba.</p>
+                    </div>
+                    <button onclick="loadPrincipalReport()" class="bg-emerald-600 text-white text-xs px-4 py-2 rounded-xl font-semibold cursor-pointer"><i class="fa-solid fa-rotate mr-1"></i> Muat Ulang</button>
+                </div>
+                <div id="principalReportCard" class="bg-white p-6 rounded-2xl border shadow-xs space-y-4 text-xs">
+                    <p class="text-slate-400">Silakan muat laporan...</p>
+                </div>
+            </section>
+
+            <!-- PENGATURAN API -->
+            <section id="tab-pengaturan" class="tab-content hidden space-y-6">
+                <h3 class="text-2xl font-extrabold text-slate-900">Pengaturan API Google Apps Script</h3>
+                <div class="bg-white p-6 rounded-2xl border shadow-xs space-y-3 text-xs">
+                    <label class="block font-bold">URL Web App API</label>
+                    <input type="text" id="sheetsApiInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-50 border rounded-xl px-3 py-2.5">
+                    <button onclick="saveApiUrl()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold cursor-pointer">Simpan &amp; Hubungkan</button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL MISI -->
+    <div id="createMissionModal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-3 text-xs">
+            <h4 class="font-bold text-slate-800 text-sm">Buat Misi EcoMadrasah Baru</h4>
+            <div><label class="block font-bold mb-1">Judul Misi *</label><input type="text" id="mTitle" placeholder="Contoh: Pemilahan Sampah" class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+            <div><label class="block font-bold mb-1">Deskripsi *</label><textarea id="mDesc" rows="3" class="w-full bg-slate-50 border rounded-xl p-3"></textarea></div>
+            <div class="grid grid-cols-2 gap-2">
+                <div><label class="block font-bold mb-1">Poin *</label><input type="number" id="mPoints" value="50" class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                <div><label class="block font-bold mb-1">Kelas Sasaran</label><input type="text" id="mTargetClass" value="VI" class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="document.getElementById('createMissionModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
+                <button onclick="submitNewMissionToServer()" id="btnCreateMission" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Terbitkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MATERI PEMBELAJARAN (GURU) -->
+    <div id="createMaterialModal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-3 text-xs">
+            <h4 class="font-bold text-slate-800 text-sm">Buat Materi Pembelajaran Baru</h4>
+            <div><label class="block font-bold mb-1">Judul Materi *</label><input type="text" id="matTitle" placeholder="Contoh: Daur Ulang Plastik" class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+            <div><label class="block font-bold mb-1">Topik *</label><input type="text" id="matTopic" placeholder="EcoWaste & Lingkungan" class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+            <div><label class="block font-bold mb-1">Kelas Sasaran</label><input type="text" id="matClass" value="VI" class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+            <div><label class="block font-bold mb-1">Isi / Penjelasan Materi *</label><textarea id="matDesc" rows="4" class="w-full bg-slate-50 border rounded-xl p-3" placeholder="Penjelasan materi..."></textarea></div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="document.getElementById('createMaterialModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
+                <button onclick="submitNewMaterialToServer()" id="btnCreateMaterial" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Simpan Materi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ECOWASTE -->
+    <div id="wasteModal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-3 text-xs">
+            <h4 class="font-bold text-slate-800 text-sm">Pencatatan Sampah Baru</h4>
+            <form onsubmit="handleWasteSubmit(event)" class="space-y-3">
+                <div><label class="block font-bold mb-1">Tanggal</label><input type="date" id="wDate" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                <div><label class="block font-bold mb-1">Lokasi</label><input type="text" id="wLocation" placeholder="Kelas 6A" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="block font-bold mb-1">Organik (kg)</label><input type="number" step="0.1" id="wOrganic" value="0" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                    <div><label class="block font-bold mb-1">Didaur Ulang (kg)</label><input type="number" step="0.1" id="wRecycled" value="0" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                </div>
+                <div><label class="block font-bold mb-1">Residu (kg)</label><input type="number" step="0.1" id="wResidue" value="0" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="document.getElementById('wasteModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL ECOENERGY -->
+    <div id="energyModal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-3 text-xs">
+            <h4 class="font-bold text-slate-800 text-sm">Pencatatan Kegiatan Energi</h4>
+            <form onsubmit="handleEnergySubmit(event)" class="space-y-3">
+                <div><label class="block font-bold mb-1">Tanggal</label><input type="date" id="eDate" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                <div><label class="block font-bold mb-1">Kategori</label>
+                    <select id="eCategory" class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+                        <option value="Mematikan Lampu">Mematikan Lampu</option>
+                        <option value="Mematikan Kipas/AC">Mematikan Kipas/AC</option>
+                        <option value="Mematikan Proyektor/TV">Mematikan Proyektor/TV</option>
+                        <option value="Penghematan Air">Penghematan Air</option>
+                    </select>
+                </div>
+                <div><label class="block font-bold mb-1">Deskripsi Kegiatan</label><textarea id="eDesc" rows="3" required class="w-full bg-slate-50 border rounded-xl p-3" placeholder="Rincian kegiatan..."></textarea></div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="document.getElementById('energyModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL ECOGREEN -->
+    <div id="greenModal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-3 text-xs">
+            <h4 class="font-bold text-slate-800 text-sm">Pencatatan Penghijauan</h4>
+            <form onsubmit="handleGreenSubmit(event)" class="space-y-3">
+                <div><label class="block font-bold mb-1">Tanggal</label><input type="date" id="gDate" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                <div><label class="block font-bold mb-1">Kategori</label>
+                    <select id="gCategory" class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+                        <option value="Penyiraman">Penyiraman Tanaman</option>
+                        <option value="Pemupukan">Pemupukan</option>
+                        <option value="Penanaman Baru">Penanaman Baru</option>
+                        <option value="Pembersihan Taman">Pembersihan Taman</option>
+                    </select>
+                </div>
+                <div><label class="block font-bold mb-1">Nama Tanaman</label><input type="text" id="gPlantName" placeholder="Contoh: Lidah Buaya / Pohon Mangga" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                <div><label class="block font-bold mb-1">Deskripsi Perawatan</label><textarea id="gDesc" rows="3" required class="w-full bg-slate-50 border rounded-xl p-3"></textarea></div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="document.getElementById('greenModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH TANAMAN -->
+    <div id="plantModal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-3 text-xs">
+            <h4 class="font-bold text-slate-800 text-sm">Tambah Inventaris Tanaman</h4>
+            <form onsubmit="handlePlantSubmit(event)" class="space-y-3">
+                <div><label class="block font-bold mb-1">Nama Tanaman</label><input type="text" id="pName" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                <div><label class="block font-bold mb-1">Jenis Tanaman</label><input type="text" id="pType" placeholder="Apotek Hidup / Tanaman Hias / Pelindung" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                <div><label class="block font-bold mb-1">Lokasi</label><input type="text" id="pLocation" placeholder="Taman Depan Kelas VI" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                <div><label class="block font-bold mb-1">Kondisi</label><input type="text" id="pCondition" value="Sehat & Subur" required class="w-full bg-slate-50 border rounded-xl px-3 py-2"></div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="document.getElementById('plantModal').classList.add('hidden')" class="px-4 py-2 border rounded-xl cursor-pointer">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-semibold cursor-pointer">Simpan Tanaman</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC (Termasuk PWA Logic) -->
+    <script>
+        // PWA SERVICE WORKER REGISTRATION
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Tampilkan tombol instal di sidebar
+            document.getElementById('installAppBtn').classList.remove('hidden');
         });
-    }
 
-    // 6. Cetak Data Siswa ke Tabel
-    let tbodySiswa = document.getElementById('tabel-siswa');
-    if(tbodySiswa) {
-        tbodySiswa.innerHTML = ''; // Bersihkan tulisan "Memuat data..."
-        
-        if (daftarSiswaBinaan.length === 0) {
-            tbodySiswa.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-500 italic">Data siswa untuk kelas ${angkaKelasBinaan} tidak ditemukan.</td></tr>`;
-        } else {
-            // Looping dan buat baris tabel
-            daftarSiswaBinaan.forEach(siswa => {
-                let tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition-colors";
-                
-                let idSiswa = siswa.ID_Siswa || siswa.ID || siswa.id_siswa || '-';
-                let namaSiswa = siswa.Nama_Siswa || siswa.Nama || siswa.nama_siswa || '-';
-                let kelasSiswa = siswa.Kelas || siswa.kelas || '-';
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepts PWA install');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('installAppBtn').classList.add('hidden');
+                });
+            }
+        }
 
-                tr.innerHTML = `
-                    <td class="border-b border-slate-200 p-4 text-slate-700">${idSiswa}</td>
-                    <td class="border-b border-slate-200 p-4 text-slate-700 font-medium">${namaSiswa}</td>
-                    <td class="border-b border-slate-200 p-4 text-slate-700 text-center">
-                        <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-semibold">${kelasSiswa}</span>
-                    </td>
-                `;
-                tbodySiswa.appendChild(tr);
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker Registered'))
+                .catch(err => console.log('Service Worker failed:', err));
             });
         }
-    }
-}
-</script>
-</script>
 
-<!-- ==================================================================== -->
-<!-- AKHIR KODE DASBOR GURU                                               -->
-<!-- ==================================================================== -->
+        // ORIGINAL APP LOGIC
+        let ECOSCHOOL_API_URL = localStorage.getItem('eco_api_url') || "";
+        let currentUser = null;
+
+        window.onload = function() {
+            if(ECOSCHOOL_API_URL) {
+                document.getElementById('sheetsApiInput').value = ECOSCHOOL_API_URL;
+                updateApiStatus(true, "API Terhubung");
+            } else {
+                updateApiStatus(false, "API Belum Diset");
+            }
+        };
+
+        function saveApiUrl() {
+            let url = document.getElementById('sheetsApiInput').value.trim();
+            if(!url) return alert("URL tidak boleh kosong!");
+            ECOSCHOOL_API_URL = url;
+            localStorage.setItem('eco_api_url', url);
+            updateApiStatus(true, "API Tersimpan");
+            alert("URL API berhasil disimpan!");
+        }
+
+        function updateApiStatus(connected, text) {
+            let badge = document.getElementById('apiStatusBadge');
+            badge.textContent = text;
+            badge.className = connected ? "bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-3 py-1 rounded-full font-bold" : "bg-amber-50 text-amber-700 border border-amber-200 text-xs px-3 py-1 rounded-full font-bold";
+        }
+
+        async function apiGet(action) {
+            if(!ECOSCHOOL_API_URL) throw new Error("URL API belum dikonfigurasi.");
+            let res = await fetch(`${ECOSCHOOL_API_URL}?action=${action}`);
+            let json = await res.json();
+            if(json.status === "success") return json.data;
+            throw new Error(json.message || "Gagal mengambil data.");
+        }
+
+        async function apiPost(payload) {
+            if(!ECOSCHOOL_API_URL) throw new Error("URL API belum dikonfigurasi.");
+            let res = await fetch(ECOSCHOOL_API_URL, { method: "POST", body: JSON.stringify(payload) });
+            let json = await res.json();
+            if(json.status === "success") return json.data;
+            throw new Error(json.message || "Operasi server gagal.");
+        }
+
+        function normalizeClass(cls) {
+            if(!cls) return "VI";
+            let s = cls.toString().toUpperCase().replace("KELAS", "").replace("GURU", "").trim();
+            if(s.includes("6") || s.includes("VI")) return "VI";
+            if(s.includes("5") || s.includes("V")) return "V";
+            if(s.includes("4") || s.includes("IV")) return "IV";
+            if(s.includes("3") || s.includes("III")) return "III";
+            if(s.includes("2") || s.includes("II")) return "II";
+            if(s.includes("1") || s.includes("I")) return "I";
+            return s;
+        }
+
+        function switchAuthTab(tab) {
+            if(tab === 'login') {
+                document.getElementById('formLogin').classList.remove('hidden');
+                document.getElementById('formRegister').classList.add('hidden');
+                document.getElementById('authTabLogin').className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-emerald-900 shadow-sm transition cursor-pointer";
+                document.getElementById('authTabRegister').className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-emerald-200 transition cursor-pointer";
+            } else {
+                document.getElementById('formRegister').classList.remove('hidden');
+                document.getElementById('formLogin').classList.add('hidden');
+                document.getElementById('authTabRegister').className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-emerald-900 shadow-sm transition cursor-pointer";
+                document.getElementById('authTabLogin').className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-emerald-200 transition cursor-pointer";
+            }
+        }
+
+        function toggleRegFields() {
+            let role = document.getElementById('regRole').value;
+            let label = document.getElementById('regIdLabel');
+            label.textContent = role === 'student' ? "ID Siswa (Sesuai Data Sheets)" : "ID Guru (Sesuai Data Sheets)";
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            let role = document.getElementById('regRole').value;
+            let username = document.getElementById('regUsername').value.trim();
+            let idRef = document.getElementById('regIdRef').value.trim();
+            let err = document.getElementById('regError');
+            let succ = document.getElementById('regSuccess');
+
+            try {
+                let res = await apiPost({ action: "registerAccount", data: { username, role, id_referensi: idRef } });
+                succ.textContent = res.message || "Pendaftaran berhasil! Akun langsung aktif, silakan masuk.";
+                succ.classList.remove('hidden'); err.classList.add('hidden');
+            } catch(ex) {
+                err.textContent = ex.message; err.classList.remove('hidden'); succ.classList.add('hidden');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            let nameInput = document.getElementById('loginUser').value.trim();
+            let role = document.getElementById('loginRole').value;
+            let err = document.getElementById('loginError');
+
+            try {
+                if(role === 'admin' || role === 'principal') {
+                    currentUser = { 
+                        id: "ADMIN-01", 
+                        name: nameInput, 
+                        role: role, 
+                        photo: "https://ui-avatars.com/api/?name=" + encodeURIComponent(nameInput) + "&background=059669&color=fff" 
+                    };
+                } else {
+                    if(!ECOSCHOOL_API_URL) { 
+                        err.textContent = "API belum diatur! Hubungi Administrator Madrasah untuk menghubungkan sistem."; 
+                        err.classList.remove('hidden'); 
+                        return; 
+                    }
+                    let accounts = await apiGet('listAccounts');
+                    let found = accounts.find(a => a.username.toString().toLowerCase() === nameInput.toLowerCase() && a.role === role);
+                    
+                    if(found) {
+                        if(found.status_akun !== "AKTIF") throw new Error("Akun Anda sedang dinonaktifkan.");
+                        let idData = found.id_referensi;
+                        let kelasStr = "VI"; 
+
+                        if (role === 'student') {
+                            let students = await apiGet('getStudents');
+                            let s = students.find(x => (x['id siswa'] || x.id || '').toString() === idData.toString());
+                            if(s) kelasStr = s.kelas || s['kelas'] || "VI";
+                            
+                            currentUser = {
+                                id: idData,
+                                name: found.username,
+                                kelas: normalizeClass(kelasStr),
+                                role: 'student',
+                                idRef: idData,
+                                photo: found.foto_profil || "https://ui-avatars.com/api/?name=" + encodeURIComponent(found.username) + "&background=059669&color=fff"
+                            };
+                        } else if (role === 'teacher') {
+                            let teachers = await apiGet('getTeachers');
+                            let t = teachers.find(x => (x['id guru'] || x.id || '').toString() === idData.toString());
+                            if(t) kelasStr = t['tugas'] || t.tugas || "VI";
+                            
+                            let idString = idData.toString().toUpperCase().trim();
+                            // Deteksi ID Guru Mapel
+                            let isMapel = ["G008", "G009", "G010", "G011", "G-08", "G-09", "G-10", "G-11"].includes(idString);
+
+                            currentUser = {
+                                id: idData,
+                                name: found.username,
+                                kelasBinaan: isMapel ? "SEMUA KELAS" : normalizeClass(kelasStr),
+                                isMapel: isMapel,
+                                role: 'teacher',
+                                idRef: idData,
+                                photo: found.foto_profil || "https://ui-avatars.com/api/?name=" + encodeURIComponent(found.username) + "&background=059669&color=fff"
+                            };
+                        }
+                    } else {
+                        throw new Error("Akun tidak ditemukan. Silakan Buat Akun terlebih dahulu.");
+                    }
+                }
+                document.getElementById('authOverlay').classList.add('hidden');
+                initUserSession();
+            } catch(ex) { err.textContent = "Gagal Login: " + ex.message; err.classList.remove('hidden'); }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('authOverlay').classList.remove('hidden');
+        }
+
+        function initUserSession() {
+            if(!currentUser) return;
+            
+            // 1. UPDATE SIDEBAR UI
+            document.getElementById('sidebarUserName').textContent = currentUser.name;
+            document.getElementById('sidebarRoleLabel').textContent = currentUser.role.toUpperCase();
+            document.getElementById('sidebarUserPhoto').src = currentUser.photo || "https://ui-avatars.com/api/?name=" + encodeURIComponent(currentUser.name) + "&background=059669&color=fff";
+            document.getElementById('dashUserRoleTitle').textContent = `Halo, ${currentUser.name} (${currentUser.role.toUpperCase()})` + (currentUser.kelas ? ` - Kelas ${currentUser.kelas}` : (currentUser.isMapel ? ` - Guru Mata Pelajaran (Semua Kelas)` : (currentUser.kelasBinaan ? ` - Binaan Kelas ${currentUser.kelasBinaan}` : '')));
+
+            // 2. UPDATE TAB PROFIL UI
+            document.getElementById('profileName').textContent = currentUser.name;
+            document.getElementById('profileRole').textContent = "Peran: " + currentUser.role.toUpperCase();
+            document.getElementById('profileIdRef').textContent = "ID Sistem: " + (currentUser.idRef || currentUser.id);
+            document.getElementById('profilePagePhoto').src = currentUser.photo || "https://ui-avatars.com/api/?name=" + encodeURIComponent(currentUser.name) + "&background=059669&color=fff";
+            document.getElementById('profileUsernameInput').value = currentUser.name;
+
+            // 3. SET UP TEACHER BUTTONS
+            let btnContainer = document.getElementById('teacherActionBtnContainer');
+            let teacherSec = document.getElementById('teacherDashboardSection');
+            let matBtnContainer = document.getElementById('teacherMaterialBtnContainer');
+
+            if(currentUser.role === 'teacher' || currentUser.role === 'admin') {
+                btnContainer.innerHTML = `<button onclick="document.getElementById('createMissionModal').classList.remove('hidden')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2.5 rounded-xl font-semibold cursor-pointer"><i class="fa-solid fa-plus mr-1"></i> Buat Misi Baru</button>`;
+                matBtnContainer.innerHTML = `<button onclick="document.getElementById('createMaterialModal').classList.remove('hidden')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2.5 rounded-xl font-semibold cursor-pointer"><i class="fa-solid fa-plus mr-1"></i> Buat Materi AI</button>`;
+                document.getElementById('teacherReviewPanel').classList.remove('hidden');
+                teacherSec.classList.remove('hidden');
+                loadTeacherDashboardData();
+                loadTeacherQueue();
+            } else {
+                btnContainer.innerHTML = '';
+                matBtnContainer.innerHTML = '';
+                document.getElementById('teacherReviewPanel').classList.add('hidden');
+                teacherSec.classList.add('hidden');
+            }
+
+            // 4. RBAC - HIDE/SHOW MENUS
+            let role = currentUser.role;
+            document.getElementById('nav-ecoimpact').classList.toggle('hidden', role === 'student' || role === 'teacher');
+            document.getElementById('nav-laporan').classList.toggle('hidden', role === 'student' || role === 'teacher');
+            document.getElementById('nav-pengaturan').classList.toggle('hidden', role !== 'admin');
+            
+            if(role === 'principal' || role === 'admin') {
+                loadPrincipalReport();
+            }
+
+            loadMissions();
+            loadMaterials();
+            loadWasteRecords();
+            loadEnergyRecords();
+            loadGreenRecords();
+            loadPlantRecords();
+            loadDashboardStats();
+            loadEcoQuestProfile();
+            loadEcoImpactData();
+            switchTab('dashboard');
+        }
+
+        async function handleUpdateProfile(e) {
+            e.preventDefault();
+            let btn = document.getElementById('btnUpdateProfile');
+            let newUsername = document.getElementById('profileUsernameInput').value.trim();
+            let photoInput = document.getElementById('profilePhotoInput');
+            
+            if(!newUsername) return alert("Username tidak boleh kosong.");
+            
+            btn.disabled = true; 
+            btn.textContent = "Menyimpan ke Drive...";
+
+            try {
+                if(photoInput.files.length > 0) {
+                    let file = photoInput.files[0];
+                    if(file.size > 2 * 1024 * 1024) throw new Error("Ukuran foto maksimal 2MB.");
+                    
+                    let reader = new FileReader();
+                    reader.onload = async function(ev) {
+                        let base64String = ev.target.result.split(',')[1];
+                        let fileName = "PROFIL_" + currentUser.id + "_" + file.name;
+                        
+                        try {
+                            let res = await apiPost({
+                                action: "uploadProfileDrive",
+                                data: {
+                                    user_id: currentUser.idRef || currentUser.id,
+                                    new_username: newUsername,
+                                    fileName: fileName,
+                                    mimeType: file.type,
+                                    base64Data: base64String
+                                }
+                            });
+                            
+                            currentUser.name = newUsername;
+                            currentUser.photo = res.url;
+                            initUserSession();
+                            alert("Profil dan foto berhasil disimpan ke Google Drive!");
+                            photoInput.value = "";
+                        } catch(err) {
+                            alert("Gagal mengunggah ke Drive: " + err.message);
+                        } finally {
+                            btn.disabled = false; btn.textContent = "Simpan Perubahan Profil";
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    await apiPost({
+                        action: "updateProfile",
+                        data: { user_id: currentUser.idRef || currentUser.id, new_username: newUsername, foto_profil: currentUser.photo }
+                    });
+                    currentUser.name = newUsername;
+                    initUserSession();
+                    alert("Username berhasil diperbarui!");
+                    btn.disabled = false; btn.textContent = "Simpan Perubahan Profil";
+                }
+            } catch(e) {
+                alert("Error: " + e.message);
+                btn.disabled = false; btn.textContent = "Simpan Perubahan Profil";
+            }
+        }
+        
+        async function loadDashboardStats() {
+            try {
+                let rep = await apiGet('getReport');
+                document.getElementById('dashStatMissions').textContent = rep.misi_aktif || 0;
+                document.getElementById('dashStatVerified').textContent = rep.tugas_terverifikasi || 0;
+                document.getElementById('dashStatMaterials').textContent = rep.total_materi || 0;
+                document.getElementById('dashStatPoints').textContent = (rep.total_poin_siswa || 0) + " Poin";
+            } catch(e) { console.warn("Dashboard stats error:", e); }
+        }
+
+        async function loadMaterials() {
+            let container = document.getElementById('materialListContainer');
+            if(!container) return;
+            container.textContent = "Memuat materi pembelajaran...";
+            try {
+                let materials = await apiGet('listMaterials');
+                if(!materials || materials.length === 0) {
+                    container.innerHTML = `<div class="bg-white p-5 rounded-2xl border shadow-xs col-span-3 text-center text-slate-400">Belum ada materi pembelajaran.</div>`;
+                    return;
+                }
+                container.innerHTML = materials.map(m => `
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm space-y-1.5 hover:border-emerald-200 transition">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[9px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded uppercase">${m.mata_pelajaran || 'Tematik'} (Kls ${m.kelas || 'VI'})</span>
+                        </div>
+                        <h5 class="font-bold text-slate-800 text-sm leading-tight">${m.judul}</h5>
+                        <p class="text-[11px] text-slate-500 line-clamp-2">${m.deskripsi}</p>
+                        <p class="text-[9px] text-slate-400 mt-1">Oleh: ${m.pembuat || 'Guru'} • ${m.topik}</p>
+                    </div>
+                `).join('');
+            } catch(e) { container.innerHTML = `<div class="bg-white p-5 rounded-2xl border shadow-xs col-span-3 text-center text-rose-500">Gagal memuat materi: ${e.message}</div>`; }
+        }
+
+        async function submitNewMaterialToServer() {
+            let judul = document.getElementById('matTitle').value.trim();
+            let topik = document.getElementById('matTopic').value.trim();
+            let kelas = document.getElementById('matClass').value.trim();
+            let deskripsi = document.getElementById('matDesc').value.trim();
+            let btn = document.getElementById('btnCreateMaterial');
+
+            if(!judul || !deskripsi) return alert("Judul dan isi materi wajib diisi!");
+            btn.disabled = true;
+            btn.textContent = "Menyimpan...";
+
+            try {
+                await apiPost({
+                    action: "createMaterial",
+                    data: { judul, topik, kelas, deskripsi, pembuat: currentUser?.name || "Guru" }
+                });
+                document.getElementById('createMaterialModal').classList.add('hidden');
+                document.getElementById('matTitle').value = '';
+                document.getElementById('matTopic').value = '';
+                document.getElementById('matDesc').value = '';
+                alert("Materi pembelajaran berhasil disimpan ke Google Sheets!");
+                loadMaterials();
+                loadDashboardStats();
+            } catch(e) {
+                alert("Gagal menyimpan materi: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Simpan Materi";
+            }
+        }
+
+        async function loadEcoQuestProfile() {
+            if(currentUser?.role !== 'student') return;
+            try {
+                let subs = await apiGet('listSubmissions');
+                let mySubs = subs.filter(s => s.student_id == currentUser.idRef || s.nama_siswa === currentUser.name);
+                let verifiedCount = mySubs.filter(s => (s.status || "").toLowerCase().includes("terverifikasi")).length;
+                let totalPoin = verifiedCount * 50;
+                document.getElementById('questUserName').textContent = currentUser.name;
+                document.getElementById('questUserScore').textContent = `Total Poin: ${totalPoin} Poin | Status: EcoChampion (${verifiedCount} Misi Selesai)`;
+            } catch(e) { console.warn("EcoQuest profile error:", e); }
+        }
+
+        async function loadEcoImpactData() {
+            try {
+                let rep = await apiGet('getReport');
+                document.getElementById('impactTotalActs').textContent = (rep.total_ecowaste_kegiatan + rep.total_ecoenergy_kegiatan + rep.total_ecogreen_kegiatan) || 0;
+                document.getElementById('impactTotalPlants').textContent = rep.total_tanaman || 0;
+                document.getElementById('impactTotalVerified').textContent = rep.tugas_terverifikasi || 0;
+            } catch(e) { console.warn("EcoImpact error:", e); }
+        }
+
+        async function getAllowedNames() {
+            if (currentUser.role === 'principal' || currentUser.role === 'admin' || (currentUser.role === 'teacher' && currentUser.isMapel)) {
+                return null; 
+            }
+            let allowed = [currentUser.name.toLowerCase().trim()]; 
+            if (currentUser.role === 'teacher') {
+                let students = await apiGet('getStudents');
+                let myStudents = students.filter(s => normalizeClass(s.kelas || s['kelas']) === currentUser.kelasBinaan);
+                myStudents.forEach(s => allowed.push((s['data siswa'] || s.nama).toLowerCase().trim()));
+            }
+            return allowed;
+        }
+
+        async function loadWasteRecords() {
+            let tbody = document.getElementById('wasteTableBody');
+            if(!tbody) return;
+            try {
+                let records = await apiGet('listWaste');
+                let allowedNames = await getAllowedNames();
+                if (allowedNames) {
+                    records = records.filter(w => w.kategori && allowedNames.includes(w.kategori.toLowerCase().trim()));
+                }
+                if(!records || records.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data EcoWaste.</td></tr>`;
+                    return;
+                }
+                let tOrg = 0, tRec = 0, tRes = 0;
+                tbody.innerHTML = records.map(w => {
+                    let org = Number(w.organik || 0), rec = Number(w.daur_ulang || 0), res = Number(w.residu || 0);
+                    tOrg += org; tRec += rec; tRes += res;
+                    let reporter = (w.kategori && w.kategori !== 'Umum') ? `<br><span class="text-[9px] text-slate-400 font-normal">Oleh: ${w.kategori}</span>` : '';
+                    return `<tr><td class="p-3">${w.tanggal || '-'}</td><td class="p-3 font-bold">${w.lokasi || '-'}${reporter}</td><td class="p-3">${org} kg</td><td class="p-3 text-blue-600 font-bold">${rec} kg</td><td class="p-3 text-rose-600">${res} kg</td></tr>`;
+                }).join('');
+                document.getElementById('statTotalOrganic').textContent = tOrg.toFixed(1) + " kg";
+                document.getElementById('statTotalRecycled').textContent = tRec.toFixed(1) + " kg";
+                document.getElementById('statTotalResidue').textContent = tRes.toFixed(1) + " kg";
+            } catch(e) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-rose-500">Gagal memuat: ${e.message}</td></tr>`;
+            }
+        }
+        function openWasteModal() { document.getElementById('wDate').valueAsDate = new Date(); document.getElementById('wasteModal').classList.remove('hidden'); }
+        async function handleWasteSubmit(e) {
+            e.preventDefault();
+            try {
+                await apiPost({
+                    action: "logWaste",
+                    data: {
+                        tanggal: document.getElementById('wDate').value,
+                        lokasi: document.getElementById('wLocation').value,
+                        organik: document.getElementById('wOrganic').value,
+                        daur_ulang: document.getElementById('wRecycled').value,
+                        residu: document.getElementById('wResidue').value
+                    }
+                });
+                document.getElementById('wasteModal').classList.add('hidden');
+                alert("Data EcoWaste berhasil disimpan!");
+                loadWasteRecords();
+                loadEcoImpactData();
+            } catch(err) { alert("Gagal: " + err.message); }
+        }
+
+        async function loadEnergyRecords() {
+            let tbody = document.getElementById('energyTableBody');
+            if(!tbody) return;
+            try {
+                let records = await apiGet('listEnergy');
+                let allowedNames = await getAllowedNames();
+                if (allowedNames) {
+                    records = records.filter(e => e.pelapor && allowedNames.includes(e.pelapor.toLowerCase().trim()));
+                }
+                if(!records || records.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Belum ada data EcoEnergy.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = records.map(e => `<tr><td class="p-3">${e.tanggal || '-'}</td><td class="p-3 font-bold">${e.kategori || '-'}</td><td class="p-3">${e.deskripsi || '-'}</td><td class="p-3 text-slate-500">${e.pelapor || '-'}</td></tr>`).join('');
+            } catch(err) { tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-500">Gagal memuat</td></tr>`; }
+        }
+        function openEnergyModal() { document.getElementById('eDate').valueAsDate = new Date(); document.getElementById('energyModal').classList.remove('hidden'); }
+        async function handleEnergySubmit(e) {
+            e.preventDefault();
+            try {
+                await apiPost({
+                    action: "logEnergy",
+                    data: {
+                        tanggal: document.getElementById('eDate').value,
+                        kategori: document.getElementById('eCategory').value,
+                        deskripsi: document.getElementById('eDesc').value,
+                        pelapor: currentUser?.name || "Siswa"
+                    }
+                });
+                document.getElementById('energyModal').classList.add('hidden');
+                alert("Kegiatan EcoEnergy berhasil dicatat!");
+                loadEnergyRecords();
+                loadEcoImpactData();
+            } catch(err) { alert("Gagal: " + err.message); }
+        }
+
+        async function loadGreenRecords() {
+            let tbody = document.getElementById('greenTableBody');
+            if(!tbody) return;
+            try {
+                let records = await apiGet('listGreen');
+                let allowedNames = await getAllowedNames();
+                if (allowedNames) {
+                    records = records.filter(g => g.pelapor && allowedNames.includes(g.pelapor.toLowerCase().trim()));
+                }
+                if(!records || records.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-slate-400">Belum ada kegiatan penghijauan.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = records.map(g => `<tr><td class="p-3">${g.tanggal || '-'}</td><td class="p-3 font-bold">${g.nama_tanaman || '-'}</td><td class="p-3">${g.deskripsi || '-'} <br><span class="text-[9px] text-slate-400">Oleh: ${g.pelapor || '-'}</span></td></tr>`).join('');
+            } catch(e) { tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-rose-500">Gagal memuat</td></tr>`; }
+        }
+        async function loadPlantRecords() {
+            let tbody = document.getElementById('plantTableBody');
+            if(!tbody) return;
+            try {
+                let records = await apiGet('listPlants');
+                if(!records || records.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Belum ada inventaris tanaman.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = records.map(p => `<tr><td class="p-3 font-bold">${p.nama_tanaman || '-'}</td><td class="p-3">${p.jenis || '-'}</td><td class="p-3">${p.lokasi || '-'}</td><td class="p-3 text-emerald-600">${p.kondisi || '-'}</td></tr>`).join('');
+            } catch(e) { tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-500">Gagal memuat</td></tr>`; }
+        }
+        function openGreenModal() { document.getElementById('gDate').valueAsDate = new Date(); document.getElementById('greenModal').classList.remove('hidden'); }
+        function openPlantModal() { document.getElementById('plantModal').classList.remove('hidden'); }
+        async function handleGreenSubmit(e) {
+            e.preventDefault();
+            try {
+                await apiPost({
+                    action: "logGreen",
+                    data: {
+                        tanggal: document.getElementById('gDate').value,
+                        kategori: document.getElementById('gCategory').value,
+                        nama_tanaman: document.getElementById('gPlantName').value,
+                        deskripsi: document.getElementById('gDesc').value,
+                        pelapor: currentUser?.name || "Siswa"
+                    }
+                });
+                document.getElementById('greenModal').classList.add('hidden');
+                alert("Kegiatan EcoGreen berhasil disimpan!");
+                loadGreenRecords();
+                loadEcoImpactData();
+            } catch(err) { alert("Gagal: " + err.message); }
+        }
+        async function handlePlantSubmit(e) {
+            e.preventDefault();
+            try {
+                await apiPost({
+                    action: "addPlant",
+                    data: {
+                        nama_tanaman: document.getElementById('pName').value,
+                        jenis: document.getElementById('pType').value,
+                        lokasi: document.getElementById('pLocation').value,
+                        kondisi: document.getElementById('pCondition').value,
+                        penanggung_jawab: currentUser?.name || "Admin"
+                    }
+                });
+                document.getElementById('plantModal').classList.add('hidden');
+                alert("Tanaman baru berhasil ditambahkan!");
+                loadPlantRecords();
+                loadEcoImpactData();
+            } catch(err) { alert("Gagal: " + err.message); }
+        }
+
+        async function loadTeacherDashboardData() {
+            let listEl = document.getElementById('teacherClassStudentsList');
+            listEl.textContent = "Memuat siswa kelas binaan...";
+            try {
+                let students = await apiGet('getStudents');
+                let filtered = students.filter(s => currentUser.isMapel || normalizeClass(s.kelas || s['kelas']) === currentUser.kelasBinaan);
+                if(filtered.length === 0) {
+                    listEl.textContent = currentUser.isMapel ? 'Tidak ada siswa terdaftar.' : `Tidak ada siswa terdaftar untuk kelas binaan ${currentUser.kelasBinaan}.`;
+                    return;
+                }
+                let html = `<table class="w-full text-left border-collapse"><tr class="bg-slate-100"><th class="p-2 border">ID</th><th class="p-2 border">Nama Siswa</th><th class="p-2 border">Kelas</th></tr>`;
+                filtered.forEach(s => {
+                    html += `<tr><td class="p-2 border">${s['id siswa'] || '-'}</td><td class="p-2 border font-bold">${s['data siswa'] || s.nama}</td><td class="p-2 border">${s.kelas || '-'}</td></tr>`;
+                });
+                html += `</table>`;
+                listEl.innerHTML = html;
+            } catch(e) {
+                listEl.textContent = "Gagal memuat siswa: " + e.message;
+            }
+        }
+
+        async function submitNewMissionToServer() {
+            let judul = document.getElementById('mTitle').value.trim();
+            let deskripsi = document.getElementById('mDesc').value.trim();
+            let poin = document.getElementById('mPoints').value;
+            let kelas_sasaran = document.getElementById('mTargetClass').value.trim();
+            let btn = document.getElementById('btnCreateMission');
+
+            if(!judul || !deskripsi) return alert("Judul dan deskripsi misi wajib diisi!");
+            
+            btn.disabled = true;
+            btn.textContent = "Menyimpan...";
+
+            try {
+                await apiPost({
+                    action: "createMission",
+                    data: { 
+                        judul: judul, 
+                        deskripsi: deskripsi, 
+                        poin: poin, 
+                        kelas_sasaran: kelas_sasaran, 
+                        dibuat_oleh: currentUser?.name || "Guru"
+                    }
+                });
+                document.getElementById('createMissionModal').classList.add('hidden');
+                document.getElementById('mTitle').value = '';
+                document.getElementById('mDesc').value = '';
+                alert("Misi EcoMadrasah berhasil diterbitkan ke server!");
+                loadMissions();
+                loadDashboardStats();
+            } catch(e) {
+                alert("Gagal menerbitkan misi: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Terbitkan";
+            }
+        }
+    
+        async function loadMissions() {
+            let container = document.getElementById('missionListContainer');
+            if(!container) return;
+            container.textContent = "Memuat daftar misi...";
+            try {
+                let missions = await apiGet('listMissions');
+                let submissions = await apiGet('listSubmissions').catch(() => []);
+                let targetMissions = missions;
+                if(currentUser?.role === 'student') {
+                    targetMissions = missions.filter(m => {
+                        let sasaran = normalizeClass(m.kelas_sasaran || m.targetClass || "VI");
+                        return sasaran === currentUser.kelas || sasaran.toLowerCase().includes("semua");
+                    });
+                } else if (currentUser?.role === 'teacher') {
+                    if (currentUser.isMapel) {
+                        targetMissions = missions.filter(m => (m.dibuat_oleh || "").trim() === currentUser.name.trim());
+                    } else {
+                        targetMissions = missions.filter(m => {
+                            let sasaran = normalizeClass(m.kelas_sasaran || m.targetClass);
+                            return sasaran === currentUser.kelasBinaan || (m.dibuat_oleh || "").trim() === currentUser.name.trim();
+                        });
+                    }
+                }
+                if(targetMissions.length === 0) {
+                    container.textContent = "Belum ada misi aktif.";
+                    return;
+                }
+                container.innerHTML = "";
+                targetMissions.forEach(m => {
+                    let mId = m.mission_id || m.id;
+                    let userSub = submissions.find(sub => (sub.mission_id == mId || sub.missionId == mId) && (sub.student_id == currentUser?.idRef || sub.nama_siswa === currentUser?.name));
+                    let statusLabel = userSub ? userSub.status : 'Belum Dikerjakan';
+                    let badgeColor = userSub?.status === 'Terverifikasi' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600';
+
+                    let div = document.createElement('div');
+                    div.className = "bg-white p-5 rounded-2xl border shadow-xs space-y-3";
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-emerald-600">+${m.poin || 50} Poin</span>
+                            <span class="text-[10px] ${badgeColor} px-2.5 py-1 rounded-full font-bold uppercase">${statusLabel}</span>
+                        </div>
+                        <h5 class="font-bold text-slate-800 text-sm">${m.judul || m.title}</h5>
+                        <p class="text-xs text-slate-600">${m.deskripsi || m.desc}</p>
+                    `;
+                    if(currentUser?.role === 'student' && (!userSub || userSub.status === 'Perlu Perbaikan')) {
+                        let btn = document.createElement('button');
+                        btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2.5 rounded-xl font-semibold cursor-pointer";
+                        btn.textContent = "Kerjakan & Kirim Tugas";
+                        btn.onclick = () => openStudentSubmitModal(mId, m.judul || m.title, m.deskripsi || m.desc);
+                        div.appendChild(btn);
+                    }
+                    container.appendChild(div);
+                });
+            } catch(e) { container.textContent = "Gagal memuat misi: " + e.message; }
+        }
+
+        function openStudentSubmitModal(mId, title, desc) {
+            document.getElementById('submitMissionTitle').textContent = "Kerjakan Tugas: " + title;
+            document.getElementById('submitMissionInstructions').textContent = desc;
+            document.getElementById('activeMissionId').value = mId;
+            document.getElementById('subDate').valueAsDate = new Date();
+            document.getElementById('studentSubmitCard').classList.remove('hidden');
+        }
+
+        async function submitStudentTask() {
+            let mId = document.getElementById('activeMissionId').value;
+            let jawaban = document.getElementById('subTextAnswer').value.trim();
+            let tanggal = document.getElementById('subDate').value;
+            if(!jawaban) return alert("Jawaban tidak boleh kosong!");
+            if(!tanggal) return alert("Tanggal pelaksanaan wajib diisi!");
+            try {
+                await apiPost({
+                    action: "submitTask",
+                    data: { mission_id: mId, student_id: currentUser.idRef || currentUser.id, nama_siswa: currentUser.name, kelas: currentUser.kelas, jawaban: jawaban, tanggal: tanggal }
+                });
+                document.getElementById('studentSubmitCard').classList.add('hidden');
+                document.getElementById('subTextAnswer').value = '';
+                alert("Tugas berhasil dikirim!");
+                loadMissions();
+                loadDashboardStats();
+            } catch(e) { alert("Gagal: " + e.message); }
+        }
+
+        async function loadTeacherQueue() {
+            let queueBox = document.getElementById('teacherSubmissionsQueue');
+            if(!queueBox) return;
+            queueBox.textContent = "Memuat antrean...";
+            try {
+                let subs = await apiGet('listSubmissions');
+                let missions = await apiGet('listMissions').catch(() => []);
+                let myMissionIds = missions.filter(m => (m.dibuat_oleh || "").trim() === currentUser.name.trim()).map(m => m.mission_id || m.id);
+
+                let filtered = subs.filter(sub => {
+                    if (currentUser.isMapel) {
+                        return myMissionIds.includes(sub.mission_id || sub.missionId);
+                    } else {
+                        return normalizeClass(sub.kelas) === currentUser.kelasBinaan;
+                    }
+                });
+                if(filtered.length === 0) { queueBox.textContent = "Belum ada tugas dikumpulkan untuk kelas Anda."; return; }
+                queueBox.innerHTML = filtered.map(sub => `
+                    <div class="p-3 bg-slate-50 rounded-xl border space-y-2">
+                        <div><b>${sub.nama_siswa}</b> (Kelas: ${sub.kelas}) — Status: <span class="text-amber-600 font-bold">${sub.status}</span>
+                        <p class="text-slate-600 mt-1">Jawaban: "${sub.jawaban}"</p></div>
+                        <div class="flex gap-2 pt-2 border-t">
+                            <input type="number" id="score-${sub.submission_id || sub.id}" value="85" min="0" max="100" class="w-20 bg-white border rounded px-2 py-1 text-xs">
+                            <input type="text" id="fb-${sub.submission_id || sub.id}" value="Sangat baik!" class="flex-1 bg-white border rounded px-2 py-1 text-xs">
+                            <button onclick="submitReview('${sub.submission_id || sub.id}', 'verified')" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-bold cursor-pointer">Terima</button>
+                            <button onclick="submitReview('${sub.submission_id || sub.id}', 'revision_required')" class="bg-amber-600 text-white px-3 py-1 rounded text-xs font-bold cursor-pointer">Perbaikan</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) { queueBox.textContent = "Gagal memuat antrean: " + e.message; }
+        }
+
+        async function submitReview(subId, status) {
+            let score = parseInt(document.getElementById(`score-${subId}`).value) || 0;
+            let fb = document.getElementById(`fb-${subId}`).value.trim();
+            try {
+                await apiPost({ action: "reviewSubmission", data: { id: subId, status: status, nilai: score, umpan_balik: fb, guru_penilai: currentUser.name } });
+                alert("Penilaian berhasil disimpan!");
+                loadTeacherQueue();
+                loadDashboardStats();
+                loadEcoQuestProfile();
+                loadEcoImpactData();
+            } catch(e) { alert("Gagal: " + e.message); }
+        }
+
+        async function loadPrincipalReport() {
+            let card = document.getElementById('principalReportCard');
+            if(!card) return;
+            card.textContent = "Memuat laporan agregat...";
+            try {
+                let rep = await apiGet('getReport');
+                card.innerHTML = `
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="p-3 bg-slate-50 border rounded-xl"><p class="text-slate-400">Total Guru</p><h4 class="text-lg font-bold">${rep.total_guru || 0}</h4></div>
+                        <div class="p-3 bg-slate-50 border rounded-xl"><p class="text-slate-400">Total Siswa</p><h4 class="text-lg font-bold">${rep.total_siswa || 0}</h4></div>
+                        <div class="p-3 bg-slate-50 border rounded-xl"><p class="text-slate-400">Kegiatan EcoWaste</p><h4 class="text-lg font-bold">${rep.total_ecowaste_kegiatan || 0}</h4></div>
+                        <div class="p-3 bg-slate-50 border rounded-xl"><p class="text-slate-400">Kegiatan EcoEnergy</p><h4 class="text-lg font-bold">${rep.total_ecoenergy_kegiatan || 0}</h4></div>
+                        <div class="p-3 bg-slate-50 border rounded-xl"><p class="text-slate-400">Kegiatan EcoGreen</p><h4 class="text-lg font-bold">${rep.total_ecogreen_kegiatan || 0}</h4></div>
+                        <div class="p-3 bg-slate-50 border rounded-xl"><p class="text-slate-400">Inventaris Tanaman</p><h4 class="text-lg font-bold">${rep.total_tanaman || 0}</h4></div>
+                        <div class="p-3 bg-slate-50 border rounded-xl"><p class="text-slate-400">Tugas Terverifikasi</p><h4 class="text-lg font-bold text-emerald-600">${rep.tugas_terverifikasi || 0}</h4></div>
+                        <div class="p-3 bg-slate-50 border rounded-xl"><p class="text-slate-400">Rata-rata Nilai</p><h4 class="text-lg font-bold text-blue-600">${rep.rata_rata_nilai || 0}</h4></div>
+                    </div>
+                `;
+            } catch(e) { card.innerHTML = `<p class="text-rose-500">Gagal memuat laporan: ${e.message}</p>`; }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            let tab = document.getElementById('tab-' + tabId);
+            if(tab) tab.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('bg-emerald-800', 'text-white');
+                el.classList.add('text-emerald-200');
+            });
+            let active = document.getElementById('nav-' + tabId);
+            if(active) {
+                active.classList.add('bg-emerald-800', 'text-white');
+                active.classList.remove('text-emerald-200');
+            }
+        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('mobileSidebarBackdrop').classList.toggle('hidden'); }
+    </script>
+</body>
+</html>
